@@ -15,105 +15,24 @@ class P2PFileSharing {
             
             console.log('Socket URL:', socketURL);
             
+            // Initialize Socket.IO with proper configuration
             this.socket = io(socketURL, {
                 path: '/socket.io/',
-                transports: ['websocket', 'polling'],
+                transports: ['polling', 'websocket'],
                 reconnection: true,
                 reconnectionAttempts: 10,
                 reconnectionDelay: 1000,
                 reconnectionDelayMax: 5000,
                 timeout: 20000,
-                autoConnect: true,
-                forceNew: true,
-                withCredentials: true,
-                auth: {
-                    timestamp: Date.now()
-                }
+                autoConnect: false // Don't connect automatically
             });
+
+            // Setup event listeners before connecting
+            this.setupSocketListeners();
+
+            // Now connect
+            this.socket.connect();
             
-            // Socket event handlers with enhanced logging
-            this.socket.on('connect', () => {
-                console.log('Successfully connected to server', {
-                    id: this.socket.id,
-                    transport: this.socket.io.engine.transport.name,
-                    url: socketURL,
-                    protocol: window.location.protocol,
-                    timestamp: new Date().toISOString()
-                });
-                if (this.createRoomBtn) {
-                    this.createRoomBtn.disabled = false;
-                    this.createRoomBtn.style.opacity = '1';
-                }
-            });
-
-            this.socket.on('connect_error', (error) => {
-                console.error('Socket connection error:', {
-                    error: error.message,
-                    type: error.type,
-                    description: error.description,
-                    timestamp: new Date().toISOString()
-                });
-                console.error('Connection details:', {
-                    url: socketURL,
-                    readyState: this.socket.connected ? 'connected' : 'disconnected',
-                    transport: this.socket.io?.engine?.transport?.name || 'none',
-                    protocol: window.location.protocol,
-                    hostname: window.location.hostname,
-                    path: '/socket.io/',
-                    attempts: this.socket.io?.engine?.attempts || 0
-                });
-
-                // Try to reconnect with polling if WebSocket fails
-                if (this.socket.io.engine.transport.name === 'websocket') {
-                    console.log('WebSocket failed, trying polling...');
-                    this.socket.io.engine.transport.name = 'polling';
-                    this.socket.connect();
-                }
-
-                if (this.createRoomBtn) {
-                    this.createRoomBtn.disabled = true;
-                    this.createRoomBtn.style.opacity = '0.5';
-                }
-            });
-
-            this.socket.on('error', (error) => {
-                console.error('Socket error:', error);
-            });
-
-            this.socket.on('disconnect', (reason) => {
-                console.log('Disconnected from server:', {
-                    reason,
-                    timestamp: new Date().toISOString(),
-                    wasConnected: this.socket.connected,
-                    reconnecting: this.socket.io.reconnecting
-                });
-                if (this.createRoomBtn) {
-                    this.createRoomBtn.disabled = true;
-                    this.createRoomBtn.style.opacity = '0.5';
-                }
-            });
-
-            // Add reconnect listeners
-            this.socket.io.on('reconnect_attempt', (attempt) => {
-                console.log('Reconnection attempt:', {
-                    attempt,
-                    timestamp: new Date().toISOString()
-                });
-            });
-
-            this.socket.io.on('reconnect', (attempt) => {
-                console.log('Reconnected after attempts:', {
-                    attempt,
-                    timestamp: new Date().toISOString()
-                });
-            });
-
-            this.socket.io.on('reconnect_error', (error) => {
-                console.error('Reconnection error:', {
-                    error: error.message,
-                    timestamp: new Date().toISOString()
-                });
-            });
         } catch (error) {
             console.error('Error initializing socket:', error);
             alert('Failed to initialize connection. Please refresh the page.');
@@ -124,7 +43,6 @@ class P2PFileSharing {
         
         // Setup remaining listeners
         this.setupEventListeners();
-        this.setupSocketListeners();
     }
 
     setupUIElements() {
@@ -269,6 +187,48 @@ class P2PFileSharing {
     }
 
     setupSocketListeners() {
+        if (!this.socket) return;
+
+        this.socket.on('connect', () => {
+            console.log('Successfully connected to server', {
+                id: this.socket.id,
+                transport: this.socket.io?.engine?.transport?.name
+            });
+            if (this.createRoomBtn) {
+                this.createRoomBtn.disabled = false;
+                this.createRoomBtn.style.opacity = '1';
+            }
+        });
+
+        this.socket.on('connect_error', (error) => {
+            console.error('Socket connection error:', {
+                message: error.message,
+                type: error.type,
+                description: error.description
+            });
+
+            if (this.createRoomBtn) {
+                this.createRoomBtn.disabled = true;
+                this.createRoomBtn.style.opacity = '0.5';
+            }
+        });
+
+        this.socket.on('error', (error) => {
+            console.error('Socket error:', error);
+        });
+
+        this.socket.on('disconnect', (reason) => {
+            console.log('Disconnected from server:', {
+                reason,
+                wasConnected: this.socket.connected
+            });
+            if (this.createRoomBtn) {
+                this.createRoomBtn.disabled = true;
+                this.createRoomBtn.style.opacity = '0.5';
+            }
+        });
+
+        // Room events
         this.socket.on('room-created', ({ roomId }) => {
             this.currentRoom = roomId;
             this.showRoomInfo(roomId);
@@ -277,11 +237,6 @@ class P2PFileSharing {
         this.socket.on('room-joined', ({ roomId }) => {
             this.currentRoom = roomId;
             this.roomInfo.classList.remove('hidden');
-            this.peers.forEach((peer, userId) => {
-                if (peer.dataChannel && peer.dataChannel.readyState === 'open') {
-                    peer.dataChannel.send(JSON.stringify({ type: 'request_files' }));
-                }
-            });
         });
 
         this.socket.on('user-joined', ({ userId }) => {
@@ -302,21 +257,7 @@ class P2PFileSharing {
                 this.initializePeerConnection(userId);
             }
             const peer = this.peers.get(userId);
-            if (signal.type === 'offer') {
-                peer.connection.setRemoteDescription(new RTCSessionDescription(signal))
-                    .then(() => peer.connection.createAnswer())
-                    .then(answer => peer.connection.setLocalDescription(answer))
-                    .then(() => {
-                        this.socket.emit('signal', {
-                            userId,
-                            signal: peer.connection.localDescription
-                        });
-                    });
-            } else if (signal.type === 'answer') {
-                peer.connection.setRemoteDescription(new RTCSessionDescription(signal));
-            } else if (signal.candidate) {
-                peer.connection.addIceCandidate(new RTCIceCandidate(signal));
-            }
+            this.handleSignal(peer, signal);
         });
     }
 
@@ -574,6 +515,26 @@ class P2PFileSharing {
         const fileItem = document.getElementById(`file-${fileName}`);
         if (fileItem) {
             fileItem.remove();
+        }
+    }
+
+    async handleSignal(peer, signal) {
+        try {
+            if (signal.type === 'offer') {
+                await peer.connection.setRemoteDescription(new RTCSessionDescription(signal));
+                const answer = await peer.connection.createAnswer();
+                await peer.connection.setLocalDescription(answer);
+                this.socket.emit('signal', {
+                    userId: peer.id,
+                    signal: peer.connection.localDescription
+                });
+            } else if (signal.type === 'answer') {
+                await peer.connection.setRemoteDescription(new RTCSessionDescription(signal));
+            } else if (signal.candidate) {
+                await peer.connection.addIceCandidate(new RTCIceCandidate(signal));
+            }
+        } catch (error) {
+            console.error('Error handling signal:', error);
         }
     }
 }
