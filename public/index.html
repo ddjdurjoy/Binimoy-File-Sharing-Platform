@@ -6,13 +6,14 @@
     <title>Binimoy - P2P File Sharing</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <!-- Socket.IO client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>Binimoy</h1>
-            <button id="createRoomBtn" class="create-room-btn">
+            <button id="createRoomBtn" class="create-room-btn" disabled>
                 <i class="fas fa-plus"></i>
             </button>
         </header>
