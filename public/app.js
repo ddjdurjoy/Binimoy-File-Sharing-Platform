@@ -27,7 +27,11 @@ class P2PFileSharing {
                 autoConnect: false,
                 forceNew: true,
                 withCredentials: true,
+                auth: {
+                    token: 'client'
+                },
                 extraHeaders: {
+                    'Accept': 'application/json',
                     'Access-Control-Allow-Credentials': 'true'
                 }
             });
@@ -243,11 +247,14 @@ class P2PFileSharing {
         });
 
         this.socket.on('connect_error', (error) => {
-            console.error('Socket connection error:', {
+            console.error('Socket connection error details:', {
                 message: error.message,
                 type: error.type,
                 description: error.description,
-                transport: this.socket.io?.engine?.transport?.name
+                transport: this.socket.io?.engine?.transport?.name,
+                protocol: this.socket.io?.engine?.protocol,
+                headers: this.socket.io?.engine?.transport?.ws?._headers,
+                readyState: this.socket.io?.engine?.transport?.ws?.readyState
             });
 
             if (this.createRoomBtn) {

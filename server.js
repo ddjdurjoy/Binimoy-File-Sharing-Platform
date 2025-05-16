@@ -6,17 +6,21 @@ const cors = require('cors');
 
 // Enable CORS with specific configuration
 app.use(cors({
-    origin: '*',
+    origin: ['https://binimoyweb.vercel.app', 'https://binimoy-two.vercel.app', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true
 }));
 
 // Add specific CORS headers for Socket.IO
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    const allowedOrigins = ['https://binimoyweb.vercel.app', 'https://binimoy-two.vercel.app', 'http://localhost:3000'];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
     res.header('Access-Control-Allow-Credentials', 'true');
     
     if (req.method === 'OPTIONS') {
@@ -59,10 +63,10 @@ const server = require('http').createServer(app);
 // Configure Socket.IO with debug logging
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: ['https://binimoyweb.vercel.app', 'https://binimoy-two.vercel.app', 'http://localhost:3000'],
         methods: ['GET', 'POST', 'OPTIONS'],
         credentials: true,
-        allowedHeaders: ['Content-Type', 'Authorization']
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
     },
     allowEIO3: true,
     transports: ['websocket', 'polling'],
@@ -70,7 +74,13 @@ const io = new Server(server, {
     pingInterval: 25000,
     upgradeTimeout: 30000,
     allowUpgrades: true,
-    cookie: false,
+    cookie: {
+        name: 'io',
+        path: '/',
+        httpOnly: true,
+        sameSite: 'none',
+        secure: true
+    },
     serveClient: false,
     connectTimeout: 60000,
     maxHttpBufferSize: 1e8 // 100 MB
