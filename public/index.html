@@ -4,54 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Binimoy - P2P File Sharing</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Socket.IO client -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <meta name="description" content="Secure peer-to-peer file sharing directly in your browser">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Binimoy</h1>
-            <button id="createRoomBtn" class="create-room-btn" disabled>
-                <i class="fas fa-plus"></i>
-            </button>
-        </header>
+    <header>
+        <h1>Binimoy</h1>
+        <p>Secure P2P File Sharing</p>
+    </header>
 
-        <main>
-            <div id="roomInfo" class="room-info hidden">
-                <h2>Room Active</h2>
-                <p>Connected Peers: <span id="peerCount">0</span></p>
-            </div>
+    <main id="peers-container">
+        <!-- Peer avatars will be dynamically added here -->
+    </main>
 
-            <div class="file-upload-area" id="fileUploadArea">
-                <div class="upload-box">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Drag & Drop files here or click to upload</p>
-                    <input type="file" id="fileInput" multiple>
-                </div>
-            </div>
+    <footer>
+        <p>Files are transferred directly between peers. No data is stored on servers.</p>
+        <button id="create-room" aria-label="Create new room">+</button>
+    </footer>
 
-            <div id="filesList" class="files-list"></div>
-        </main>
-
-        <div id="roomModal" class="modal hidden">
-            <div class="modal-content">
-                <button class="close-btn" id="closeModal">×</button>
-                <h2>Join Room</h2>
-                <p>Scan this QR code or visit this link to join the room.</p>
-                <div id="qrCode"></div>
-                <div class="room-url">
-                    <input type="text" id="roomUrl" readonly>
-                    <button id="copyUrl" class="copy-btn">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="app.js"></script>
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/network.js"></script>
+    <script src="/js/file-manager.js"></script>
+    <script src="/js/ui.js"></script>
+    <script>
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Initialize network manager
+                await NetworkManager.initialize();
+                
+                // Initialize UI
+                UI.initialize();
+                
+                // Setup room creation button
+                document.getElementById('create-room').addEventListener('click', () => {
+                    socket.emit('create-room');
+                });
+                
+                // Connect to signaling server
+                const socket = io({
+                    transports: ['websocket', 'polling']
+                });
+                
+                // Handle socket events
+                socket.on('connect', () => {
+                    console.log('Connected to signaling server');
+                });
+                
+                socket.on('room-created', ({ roomId, userId }) => {
+                    // Generate and show QR code
+                    const url = `${window.location.origin}/join/${roomId}`;
+                    UI.showQRCode(url);
+                });
+                
+                socket.on('user-joined', ({ userId, userCount }) => {
+                    UI.addPeer(userId);
+                });
+                
+                socket.on('user-left', ({ userId, userCount }) => {
+                    UI.removePeer(userId);
+                    NetworkManager.disconnectPeer(userId);
+                });
+                
+                socket.on('error', ({ message }) => {
+                    UI.showNotification(message, 'error');
+                });
+                
+            } catch (error) {
+                console.error('Failed to initialize application:', error);
+                UI.showNotification('Failed to initialize application', 'error');
+            }
+        });
+    </script>
 </body>
 </html> 

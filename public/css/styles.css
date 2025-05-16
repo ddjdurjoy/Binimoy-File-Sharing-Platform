@@ -1,0 +1,228 @@
+:root {
+    --primary-color: #2196F3;
+    --success-color: #4CAF50;
+    --error-color: #F44336;
+    --text-color: #333;
+    --background-color: #f5f5f5;
+    --avatar-size: 120px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#peers-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 2rem;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.peer-avatar {
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.peer-avatar:hover {
+    transform: scale(1.05);
+}
+
+.peer-avatar.local {
+    cursor: default;
+}
+
+.peer-avatar.local:hover {
+    transform: none;
+}
+
+.avatar-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.status-indicator.online {
+    background-color: var(--success-color);
+}
+
+.status-indicator.offline {
+    background-color: var(--error-color);
+}
+
+.progress-bar {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 0%;
+    height: 4px;
+    background-color: var(--primary-color);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease;
+    z-index: 1000;
+}
+
+.notification.success {
+    border-left: 4px solid var(--success-color);
+}
+
+.notification.error {
+    border-left: 4px solid var(--error-color);
+}
+
+.notification.info {
+    border-left: 4px solid var(--primary-color);
+}
+
+.notification.fade-out {
+    animation: slideOut 0.3s ease forwards;
+}
+
+.file-request {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease;
+    z-index: 1000;
+}
+
+.file-request .file-info {
+    margin-bottom: 1rem;
+}
+
+.file-request .file-info span {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.file-request .actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.file-request button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.file-request button.accept {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.file-request button.reject {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.peer-avatar.drop-target .avatar-image {
+    border: 3px solid var(--primary-color);
+    transform: scale(1.1);
+}
+
+body.dragging::after {
+    content: 'Drop files on a peer to share';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    z-index: 999;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --avatar-size: 80px;
+    }
+
+    .avatar-image {
+        font-size: 2rem;
+    }
+
+    #peers-container {
+        padding: 1rem;
+        gap: 1rem;
+    }
+} 
