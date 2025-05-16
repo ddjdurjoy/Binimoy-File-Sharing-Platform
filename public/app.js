@@ -18,7 +18,7 @@ class P2PFileSharing {
             // Initialize Socket.IO with proper configuration
             this.socket = io(socketURL, {
                 path: '/socket.io/',
-                transports: ['polling', 'websocket'],
+                transports: ['polling'],
                 reconnection: true,
                 reconnectionAttempts: 10,
                 reconnectionDelay: 1000,
@@ -29,6 +29,7 @@ class P2PFileSharing {
 
             // Setup event listeners before connecting
             this.setupSocketListeners();
+            this.setupFileHandlers();
 
             // Now connect
             this.socket.connect();
@@ -60,9 +61,10 @@ class P2PFileSharing {
         this.roomUrl = document.getElementById('roomUrl');
         this.copyUrlBtn = document.getElementById('copyUrl');
         this.qrCodeElement = document.getElementById('qrCode');
+        this.fileUploadArea = document.getElementById('fileUploadArea');
 
-        // Log which elements were found and which weren't
-        console.log('UI Elements found:', {
+        // Log which elements were found
+        const elements = {
             createRoomBtn: !!this.createRoomBtn,
             closeModalBtn: !!this.closeModalBtn,
             roomModal: !!this.roomModal,
@@ -73,13 +75,40 @@ class P2PFileSharing {
             uploadBox: !!this.uploadBox,
             roomUrl: !!this.roomUrl,
             copyUrlBtn: !!this.copyUrlBtn,
-            qrCodeElement: !!this.qrCodeElement
-        });
+            qrCodeElement: !!this.qrCodeElement,
+            fileUploadArea: !!this.fileUploadArea
+        };
+        console.log('UI Elements found:', elements);
 
-        // Initially disable and style the create room button
+        // Initially disable the create room button
         if (this.createRoomBtn) {
             this.createRoomBtn.disabled = true;
             this.createRoomBtn.style.opacity = '0.5';
+        }
+
+        // Setup basic UI event listeners
+        if (this.closeModalBtn) {
+            this.closeModalBtn.addEventListener('click', () => this.closeModal());
+        }
+
+        if (this.createRoomBtn) {
+            this.createRoomBtn.addEventListener('click', () => this.createRoom());
+        }
+
+        if (this.copyUrlBtn && this.roomUrl) {
+            this.copyUrlBtn.addEventListener('click', () => {
+                this.roomUrl.select();
+                document.execCommand('copy');
+            });
+        }
+
+        // Setup modal close on outside click
+        if (this.roomModal) {
+            this.roomModal.addEventListener('click', (e) => {
+                if (e.target === this.roomModal) {
+                    this.closeModal();
+                }
+            });
         }
     }
 
@@ -379,15 +408,17 @@ class P2PFileSharing {
         };
     }
 
-    handleFileSelect(event) {
-        const files = event.target.files;
-        this.handleFiles(files);
-    }
-
     handleFiles(files) {
-        Array.from(files).forEach(file => {
-            this.addFileToList(file.name, 'Sending...', true);
-            this.sendFile(file);
+        files.forEach(file => {
+            console.log('Processing file:', file.name);
+            this.addFileToList(file.name, 'Preparing...');
+            
+            if (this.currentRoom) {
+                this.sendFile(file);
+            } else {
+                console.log('No active room to send files');
+                this.updateFileStatus(file.name, 'No active room');
+            }
         });
     }
 
@@ -535,6 +566,63 @@ class P2PFileSharing {
             }
         } catch (error) {
             console.error('Error handling signal:', error);
+        }
+    }
+
+    setupFileHandlers() {
+        if (!this.fileInput || !this.uploadBox || !this.fileUploadArea) {
+            console.error('File handling elements not found');
+            return;
+        }
+
+        // File input change handler
+        this.fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                this.handleFiles(Array.from(files));
+            }
+        });
+
+        // Drag and drop handlers
+        this.fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.uploadBox.style.borderColor = '#3498db';
+            this.uploadBox.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+        });
+
+        this.fileUploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.uploadBox.style.borderColor = '#3498db';
+            this.uploadBox.style.backgroundColor = 'transparent';
+        });
+
+        this.fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.uploadBox.style.borderColor = '#3498db';
+            this.uploadBox.style.backgroundColor = 'transparent';
+            
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                this.handleFiles(Array.from(files));
+            }
+        });
+
+        // Click to upload
+        this.uploadBox.addEventListener('click', () => {
+            this.fileInput.click();
+        });
+    }
+
+    updateFileStatus(fileName, status) {
+        const fileItem = document.getElementById(`file-${fileName}`);
+        if (fileItem) {
+            const fileInfo = fileItem.querySelector('.file-info');
+            if (fileInfo) {
+                fileInfo.textContent = status;
+            }
         }
     }
 }
