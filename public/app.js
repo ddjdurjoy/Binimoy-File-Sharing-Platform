@@ -18,12 +18,12 @@ class P2PFileSharing {
             // Initialize Socket.IO with proper configuration
             this.socket = io(socketURL, {
                 path: '/socket.io/',
-                transports: ['polling'],
+                transports: ['websocket', 'polling'],
                 reconnection: true,
-                reconnectionAttempts: 5,
-                reconnectionDelay: 2000,
-                reconnectionDelayMax: 10000,
-                timeout: 30000,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 60000,
                 autoConnect: false,
                 forceNew: true,
                 withCredentials: true,

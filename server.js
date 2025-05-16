@@ -65,14 +65,14 @@ const io = new Server(server, {
         allowedHeaders: ['Content-Type', 'Authorization']
     },
     allowEIO3: true,
-    transports: ['polling'],
-    pingTimeout: 30000,
-    pingInterval: 10000,
-    upgradeTimeout: 15000,
-    allowUpgrades: false,
+    transports: ['websocket', 'polling'],
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    upgradeTimeout: 30000,
+    allowUpgrades: true,
     cookie: false,
     serveClient: false,
-    connectTimeout: 45000,
+    connectTimeout: 60000,
     maxHttpBufferSize: 1e8 // 100 MB
 });
 
