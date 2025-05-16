@@ -59,33 +59,156 @@ const rooms = new Map();
 
 const server = require('http').createServer(app);
 
-// Configure Socket.IO with debug logging
+// Configure Socket.IO
 const io = new Server(server, {
     cors: {
         origin: true,
         methods: ['GET', 'POST', 'OPTIONS'],
         credentials: true
     },
-    transports: ['polling', 'websocket'],
+    transports: ['websocket', 'polling'],
     pingTimeout: 20000,
-    pingInterval: 10000,
-    upgradeTimeout: 15000,
-    allowUpgrades: true,
-    maxHttpBufferSize: 1e8 // 100 MB
+    pingInterval: 10000
 });
 
-// Add connection logging
-io.engine.on('connection_error', (err) => {
-    console.error('Connection error:', err);
-});
+// Store connected peers
+const peers = new Map();
+const localNetworks = new Map(); // Map to store peers by local network
 
-// Add middleware to log connection attempts
-io.use((socket, next) => {
-    console.log('Connection attempt:', socket.id);
-    next();
-});
+function setupSocketIO(io) {
+    io.on('connection', (socket) => {
+        console.log('Peer connected:', socket.id);
 
-setupSocketIO(io);
+        // Handle peer registration with local IP
+        socket.on('register-peer', ({ localIPs, publicIP }) => {
+            const peerId = socket.id;
+            peers.set(peerId, {
+                socket,
+                localIPs,
+                publicIP,
+                connectedTo: new Set()
+            });
+
+            // Group peers by public IP (same local network)
+            if (publicIP) {
+                if (!localNetworks.has(publicIP)) {
+                    localNetworks.set(publicIP, new Set());
+                }
+                localNetworks.get(publicIP).add(peerId);
+
+                // Notify existing peers in the same network
+                const networkPeers = Array.from(localNetworks.get(publicIP));
+                networkPeers.forEach(existingPeerId => {
+                    if (existingPeerId !== peerId) {
+                        // Notify both peers about each other
+                        io.to(existingPeerId).emit('peer-discovered', {
+                            peerId,
+                            isLocal: true
+                        });
+                        socket.emit('peer-discovered', {
+                            peerId: existingPeerId,
+                            isLocal: true
+                        });
+                    }
+                });
+            }
+        });
+
+        // Handle WebRTC signaling
+        socket.on('signal', ({ targetId, signal }) => {
+            const peer = peers.get(socket.id);
+            const targetPeer = peers.get(targetId);
+
+            if (peer && targetPeer) {
+                io.to(targetId).emit('signal', {
+                    peerId: socket.id,
+                    signal,
+                    isLocal: areInSameNetwork(peer, targetPeer)
+                });
+            }
+        });
+
+        // Handle connection established
+        socket.on('connection-established', ({ targetId }) => {
+            const peer = peers.get(socket.id);
+            const targetPeer = peers.get(targetId);
+
+            if (peer && targetPeer) {
+                peer.connectedTo.add(targetId);
+                targetPeer.connectedTo.add(socket.id);
+            }
+        });
+
+        // Handle disconnection
+        socket.on('disconnect', () => {
+            const peer = peers.get(socket.id);
+            if (peer) {
+                // Remove from local network group
+                if (peer.publicIP && localNetworks.has(peer.publicIP)) {
+                    localNetworks.get(peer.publicIP).delete(socket.id);
+                    if (localNetworks.get(peer.publicIP).size === 0) {
+                        localNetworks.delete(peer.publicIP);
+                    }
+                }
+
+                // Notify connected peers
+                peer.connectedTo.forEach(targetId => {
+                    const targetPeer = peers.get(targetId);
+                    if (targetPeer) {
+                        targetPeer.connectedTo.delete(socket.id);
+                        io.to(targetId).emit('peer-disconnected', { peerId: socket.id });
+                    }
+                });
+
+                peers.delete(socket.id);
+            }
+        });
+
+        // Handle external network peer discovery
+        socket.on('discover-external', () => {
+            const peer = peers.get(socket.id);
+            if (peer) {
+                // Generate a unique room for external discovery
+                const roomId = uuidv4();
+                socket.join(roomId);
+                socket.emit('external-room-created', { roomId });
+            }
+        });
+
+        // Handle joining external room
+        socket.on('join-external-room', ({ roomId }) => {
+            const peer = peers.get(socket.id);
+            if (peer) {
+                const room = io.sockets.adapter.rooms.get(roomId);
+                if (room) {
+                    socket.join(roomId);
+                    // Notify all peers in the room
+                    socket.to(roomId).emit('peer-discovered', {
+                        peerId: socket.id,
+                        isLocal: false
+                    });
+                    
+                    // Send existing peers to the new peer
+                    room.forEach(existingPeerId => {
+                        if (existingPeerId !== socket.id) {
+                            socket.emit('peer-discovered', {
+                                peerId: existingPeerId,
+                                isLocal: false
+                            });
+                        }
+                    });
+                } else {
+                    socket.emit('error', { message: 'Room not found' });
+                }
+            }
+        });
+    });
+}
+
+// Helper function to check if two peers are in the same network
+function areInSameNetwork(peer1, peer2) {
+    return peer1.publicIP && peer1.publicIP === peer2.publicIP;
+}
 
 // For local development
 if (process.env.NODE_ENV !== 'production') {
@@ -95,123 +218,7 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-function setupSocketIO(io) {
-    io.on('connection', (socket) => {
-        console.log('A user connected:', socket.id);
-
-        // Handle room creation
-        socket.on('create-room', () => {
-            const roomId = uuidv4();
-            console.log('Creating room:', roomId);
-            
-            if (!rooms.has(roomId)) {
-                rooms.set(roomId, { 
-                    users: new Set([socket.id]),
-                    files: [],
-                    createdAt: Date.now()
-                });
-                socket.join(roomId);
-                socket.emit('room-created', { 
-                    roomId,
-                    userId: socket.id 
-                });
-                console.log(`Room ${roomId} created by ${socket.id}`);
-            }
-        });
-
-        // Handle room joining
-        socket.on('join-room', (roomId) => {
-            console.log(`User ${socket.id} attempting to join room ${roomId}`);
-            
-            const room = rooms.get(roomId);
-            if (room) {
-                room.users.add(socket.id);
-                socket.join(roomId);
-                
-                // Send room state to the new user
-                socket.emit('room-joined', { 
-                    roomId,
-                    userId: socket.id,
-                    files: room.files,
-                    users: Array.from(room.users)
-                });
-
-                // Notify other users in the room
-                socket.to(roomId).emit('user-joined', { 
-                    userId: socket.id,
-                    userCount: room.users.size
-                });
-                
-                console.log(`User ${socket.id} joined room ${roomId}`);
-            } else {
-                console.log(`Room ${roomId} not found`);
-                socket.emit('error', { 
-                    message: 'Room not found or has expired',
-                    code: 'ROOM_NOT_FOUND'
-                });
-            }
-        });
-
-        // Handle file sharing
-        socket.on('file-shared', ({ roomId, fileInfo }) => {
-            console.log(`File shared in room ${roomId}:`, fileInfo.name);
-            
-            const room = rooms.get(roomId);
-            if (room && room.users.has(socket.id)) {
-                const fileData = {
-                    ...fileInfo,
-                    sharedBy: socket.id,
-                    timestamp: Date.now(),
-                    id: uuidv4()
-                };
-                
-                room.files.push(fileData);
-                
-                // Broadcast to all users in the room
-                io.to(roomId).emit('new-file', fileData);
-            }
-        });
-
-        // Handle WebRTC signaling
-        socket.on('signal', ({ userId, signal }) => {
-            io.to(userId).emit('signal', { 
-                userId: socket.id, 
-                signal 
-            });
-        });
-
-        // Handle disconnection
-        socket.on('disconnect', () => {
-            console.log('User disconnected:', socket.id);
-            
-            rooms.forEach((room, roomId) => {
-                if (room.users.has(socket.id)) {
-                    room.users.delete(socket.id);
-                    
-                    if (room.users.size === 0) {
-                        console.log(`Removing empty room ${roomId}`);
-                        rooms.delete(roomId);
-                    } else {
-                        socket.to(roomId).emit('user-left', { 
-                            userId: socket.id,
-                            userCount: room.users.size
-                        });
-                    }
-                }
-            });
-        });
-    });
-
-    // Clean up old rooms periodically
-    setInterval(() => {
-        const now = Date.now();
-        rooms.forEach((room, roomId) => {
-            if (now - room.createdAt > 24 * 60 * 60 * 1000) { // 24 hours
-                rooms.delete(roomId);
-            }
-        });
-    }, 60 * 60 * 1000); // Check every hour
-}
+setupSocketIO(io);
 
 // Export for Vercel serverless function
 module.exports = server; 
