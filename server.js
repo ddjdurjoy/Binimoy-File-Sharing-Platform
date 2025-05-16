@@ -64,48 +64,24 @@ const io = new Server(server, {
     cors: {
         origin: true,
         methods: ['GET', 'POST', 'OPTIONS'],
-        credentials: true,
-        allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+        credentials: true
     },
-    allowEIO3: true,
-    transports: ['websocket', 'polling'],
-    pingTimeout: 60000,
-    pingInterval: 25000,
-    upgradeTimeout: 30000,
+    transports: ['polling', 'websocket'],
+    pingTimeout: 20000,
+    pingInterval: 10000,
+    upgradeTimeout: 15000,
     allowUpgrades: true,
-    cookie: false,
-    serveClient: true,
-    connectTimeout: 60000,
     maxHttpBufferSize: 1e8 // 100 MB
 });
 
 // Add connection logging
 io.engine.on('connection_error', (err) => {
-    console.error('Connection error:', {
-        message: err.message,
-        context: err.context,
-        req: err.req ? {
-            url: err.req.url,
-            headers: err.req.headers,
-            method: err.req.method
-        } : 'No request data',
-        code: err.code,
-        type: err.type
-    });
+    console.error('Connection error:', err);
 });
 
 // Add middleware to log connection attempts
 io.use((socket, next) => {
-    console.log('Connection attempt:', {
-        id: socket.id,
-        handshake: {
-            headers: socket.handshake.headers,
-            query: socket.handshake.query,
-            auth: socket.handshake.auth,
-            url: socket.handshake.url
-        },
-        transport: socket.conn.transport.name
-    });
+    console.log('Connection attempt:', socket.id);
     next();
 });
 

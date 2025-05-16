@@ -13,29 +13,10 @@
     "routes": [
         {
             "src": "/socket.io/(.*)",
-            "headers": {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-                "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Max-Age": "86400"
-            },
-            "continue": true
-        },
-        {
-            "src": "/socket.io/(.*)",
             "dest": "server.js"
         },
         {
             "handle": "filesystem"
-        },
-        {
-            "src": "/debug",
-            "dest": "server.js"
-        },
-        {
-            "src": "/health",
-            "dest": "server.js"
         },
         {
             "src": "/(.*)",
