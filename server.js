@@ -6,7 +6,7 @@ const cors = require('cors');
 
 // Enable CORS
 app.use(cors({
-    origin: ['https://binimoyweb.vercel.app', 'http://localhost:3000'],
+    origin: true, // Allow all origins
     methods: ['GET', 'POST', 'OPTIONS'],
     credentials: true
 }));
@@ -18,7 +18,8 @@ app.get('/debug', (req, res) => {
     res.json({
         status: 'ok',
         environment: process.env.NODE_ENV,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        socketIOPath: '/socket.io/'
     });
 });
 
@@ -34,12 +35,12 @@ const server = require('http').createServer(app);
 // Configure Socket.IO with debug logging
 const io = new Server(server, {
     cors: {
-        origin: ['https://binimoyweb.vercel.app', 'http://localhost:3000'],
+        origin: true, // Allow all origins
         methods: ['GET', 'POST', 'OPTIONS'],
         credentials: true
     },
     path: '/socket.io/',
-    transports: ['websocket', 'polling'],
+    transports: ['polling', 'websocket'],
     allowEIO3: true,
     pingTimeout: 60000,
     pingInterval: 25000,
