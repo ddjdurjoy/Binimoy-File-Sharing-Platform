@@ -38,7 +38,10 @@ function setupSocketIO(io) {
         socket.on('create-room', () => {
             const roomId = uuidv4();
             if (!rooms.has(roomId)) {
-                rooms.set(roomId, { users: new Set([socket.id]) });
+                rooms.set(roomId, { 
+                    users: new Set([socket.id]),
+                    files: [] // Array to store file metadata
+                });
             }
             socket.join(roomId);
             socket.emit('room-created', { roomId });
@@ -49,10 +52,32 @@ function setupSocketIO(io) {
             if (room) {
                 room.users.add(socket.id);
                 socket.join(roomId);
-                socket.emit('room-joined', { roomId });
+                // Send existing files to the new user
+                socket.emit('room-joined', { 
+                    roomId,
+                    files: room.files // Send existing files to new user
+                });
                 socket.to(roomId).emit('user-joined', { userId: socket.id });
             } else {
                 socket.emit('error', { message: 'Room not found' });
+            }
+        });
+
+        // Handle file metadata sharing
+        socket.on('file-shared', ({ roomId, fileInfo }) => {
+            const room = rooms.get(roomId);
+            if (room) {
+                room.files.push({
+                    ...fileInfo,
+                    sharedBy: socket.id,
+                    timestamp: Date.now()
+                });
+                // Broadcast to all users in the room about the new file
+                io.to(roomId).emit('new-file', {
+                    ...fileInfo,
+                    sharedBy: socket.id,
+                    timestamp: Date.now()
+                });
             }
         });
 
