@@ -1,11 +1,26 @@
 class P2PFileSharing {
     constructor() {
-        this.socket = io();
+        this.socket = io({
+            path: '/socket.io',
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5
+        });
         this.peers = new Map();
         this.currentRoom = null;
         this.setupSocketListeners();
         this.setupUIElements();
         this.setupEventListeners();
+
+        this.socket.on('connect', () => {
+            console.log('Connected to server');
+            this.createRoomBtn.disabled = false;
+        });
+
+        this.socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            this.createRoomBtn.disabled = true;
+        });
     }
 
     setupUIElements() {
@@ -20,32 +35,60 @@ class P2PFileSharing {
         this.roomUrl = document.getElementById('roomUrl');
         this.copyUrlBtn = document.getElementById('copyUrl');
         this.qrCodeElement = document.getElementById('qrCode');
+
+        if (this.createRoomBtn) {
+            this.createRoomBtn.disabled = true;
+        }
     }
 
     setupEventListeners() {
-        this.createRoomBtn.addEventListener('click', () => this.createRoom());
-        this.closeModalBtn.addEventListener('click', () => this.closeModal());
-        this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-        this.copyUrlBtn.addEventListener('click', () => this.copyRoomUrl());
+        if (this.createRoomBtn) {
+            this.createRoomBtn.addEventListener('click', this.createRoom.bind(this));
+        }
         
-        this.uploadBox.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            this.uploadBox.style.borderColor = '#2ecc71';
-        });
+        if (this.closeModalBtn) {
+            this.closeModalBtn.addEventListener('click', this.closeModal.bind(this));
+        }
 
-        this.uploadBox.addEventListener('dragleave', () => {
-            this.uploadBox.style.borderColor = '#3498db';
-        });
+        if (this.fileInput) {
+            this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+        }
 
-        this.uploadBox.addEventListener('drop', (e) => {
-            e.preventDefault();
-            this.uploadBox.style.borderColor = '#3498db';
-            const files = e.dataTransfer.files;
-            this.handleFiles(files);
-        });
+        if (this.copyUrlBtn) {
+            this.copyUrlBtn.addEventListener('click', this.copyRoomUrl.bind(this));
+        }
+        
+        if (this.uploadBox) {
+            this.uploadBox.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                this.uploadBox.style.borderColor = '#2ecc71';
+            });
 
-        this.uploadBox.addEventListener('click', () => {
-            this.fileInput.click();
+            this.uploadBox.addEventListener('dragleave', () => {
+                this.uploadBox.style.borderColor = '#3498db';
+            });
+
+            this.uploadBox.addEventListener('drop', (e) => {
+                e.preventDefault();
+                this.uploadBox.style.borderColor = '#3498db';
+                const files = e.dataTransfer.files;
+                this.handleFiles(files);
+            });
+
+            this.uploadBox.addEventListener('click', () => {
+                if (this.fileInput) {
+                    this.fileInput.click();
+                }
+            });
+        }
+
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('room');
+            if (roomId) {
+                console.log('Joining room:', roomId);
+                this.socket.emit('join-room', roomId);
+            }
         });
     }
 
@@ -58,7 +101,6 @@ class P2PFileSharing {
         this.socket.on('room-joined', ({ roomId }) => {
             this.currentRoom = roomId;
             this.roomInfo.classList.remove('hidden');
-            // Request files from peers when joining
             this.peers.forEach((peer, userId) => {
                 if (peer.dataChannel && peer.dataChannel.readyState === 'open') {
                     peer.dataChannel.send(JSON.stringify({ type: 'request_files' }));
@@ -103,7 +145,13 @@ class P2PFileSharing {
     }
 
     createRoom() {
-        this.socket.emit('create-room');
+        console.log('Creating room...');
+        if (this.socket.connected) {
+            this.socket.emit('create-room');
+        } else {
+            console.error('Socket not connected');
+            alert('Unable to create room. Please try again.');
+        }
     }
 
     showRoomInfo(roomId) {
@@ -112,7 +160,6 @@ class P2PFileSharing {
         this.roomInfo.classList.remove('hidden');
         this.roomModal.classList.remove('hidden');
         
-        // Generate QR Code
         this.qrCodeElement.innerHTML = '';
         new QRCode(this.qrCodeElement, {
             text: roomUrl,
@@ -202,7 +249,6 @@ class P2PFileSharing {
                 try {
                     const parsedData = JSON.parse(data);
                     if (parsedData.type === 'request_files') {
-                        // Send all files to the new peer
                         const fileItems = document.querySelectorAll('.file-item');
                         fileItems.forEach(item => {
                             const downloadBtn = item.querySelector('.download-btn');
@@ -384,14 +430,8 @@ class P2PFileSharing {
     }
 }
 
-// Check if there's a room ID in the URL
-window.addEventListener('load', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomId = urlParams.get('room');
-    
-    const app = new P2PFileSharing();
-    
-    if (roomId) {
-        app.socket.emit('join-room', roomId);
-    }
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing P2P File Sharing...');
+    window.app = new P2PFileSharing();
 }); 
