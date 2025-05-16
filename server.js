@@ -5,13 +5,11 @@ const { v4: uuidv4 } = require('uuid');
 
 // Add CORS headers for all routes
 app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (origin === 'https://binimoyweb.vercel.app' || origin === 'http://localhost:3000') {
-        res.header('Access-Control-Allow-Origin', origin);
-        res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-        res.header('Access-Control-Allow-Headers', 'Content-Type');
-        res.header('Access-Control-Allow-Credentials', 'true');
-    }
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
@@ -28,13 +26,16 @@ app.get('/health', (req, res) => {
 const rooms = new Map();
 
 const server = require('http').createServer(app);
+
+// Configure Socket.IO
 const io = new Server(server, {
     cors: {
-        origin: ["https://binimoyweb.vercel.app", "http://localhost:3000"],
-        methods: ["GET", "POST", "OPTIONS"],
+        origin: '*',
+        methods: ['GET', 'POST', 'OPTIONS'],
         credentials: true,
-        allowedHeaders: ["content-type"]
+        allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept']
     },
+    allowEIO3: true,
     path: '/socket.io/',
     transports: ['polling', 'websocket'],
     pingTimeout: 60000,
