@@ -17,17 +17,17 @@ class P2PFileSharing {
             
             this.socket = io(socketURL, {
                 path: '/socket.io/',
-                transports: ['polling', 'websocket'],
+                transports: ['websocket', 'polling'],
                 reconnection: true,
-                reconnectionAttempts: 5,
+                reconnectionAttempts: 10,
                 reconnectionDelay: 1000,
                 reconnectionDelayMax: 5000,
                 timeout: 20000,
                 autoConnect: true,
                 forceNew: true,
                 withCredentials: true,
-                extraHeaders: {
-                    'Origin': window.location.origin
+                auth: {
+                    timestamp: Date.now()
                 }
             });
             
@@ -37,7 +37,8 @@ class P2PFileSharing {
                     id: this.socket.id,
                     transport: this.socket.io.engine.transport.name,
                     url: socketURL,
-                    protocol: window.location.protocol
+                    protocol: window.location.protocol,
+                    timestamp: new Date().toISOString()
                 });
                 if (this.createRoomBtn) {
                     this.createRoomBtn.disabled = false;
@@ -49,7 +50,8 @@ class P2PFileSharing {
                 console.error('Socket connection error:', {
                     error: error.message,
                     type: error.type,
-                    description: error.description
+                    description: error.description,
+                    timestamp: new Date().toISOString()
                 });
                 console.error('Connection details:', {
                     url: socketURL,
@@ -57,8 +59,17 @@ class P2PFileSharing {
                     transport: this.socket.io?.engine?.transport?.name || 'none',
                     protocol: window.location.protocol,
                     hostname: window.location.hostname,
-                    path: '/socket.io/'
+                    path: '/socket.io/',
+                    attempts: this.socket.io?.engine?.attempts || 0
                 });
+
+                // Try to reconnect with polling if WebSocket fails
+                if (this.socket.io.engine.transport.name === 'websocket') {
+                    console.log('WebSocket failed, trying polling...');
+                    this.socket.io.engine.transport.name = 'polling';
+                    this.socket.connect();
+                }
+
                 if (this.createRoomBtn) {
                     this.createRoomBtn.disabled = true;
                     this.createRoomBtn.style.opacity = '0.5';
@@ -70,11 +81,38 @@ class P2PFileSharing {
             });
 
             this.socket.on('disconnect', (reason) => {
-                console.log('Disconnected from server. Reason:', reason);
+                console.log('Disconnected from server:', {
+                    reason,
+                    timestamp: new Date().toISOString(),
+                    wasConnected: this.socket.connected,
+                    reconnecting: this.socket.io.reconnecting
+                });
                 if (this.createRoomBtn) {
                     this.createRoomBtn.disabled = true;
                     this.createRoomBtn.style.opacity = '0.5';
                 }
+            });
+
+            // Add reconnect listeners
+            this.socket.io.on('reconnect_attempt', (attempt) => {
+                console.log('Reconnection attempt:', {
+                    attempt,
+                    timestamp: new Date().toISOString()
+                });
+            });
+
+            this.socket.io.on('reconnect', (attempt) => {
+                console.log('Reconnected after attempts:', {
+                    attempt,
+                    timestamp: new Date().toISOString()
+                });
+            });
+
+            this.socket.io.on('reconnect_error', (error) => {
+                console.error('Reconnection error:', {
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
             });
         } catch (error) {
             console.error('Error initializing socket:', error);

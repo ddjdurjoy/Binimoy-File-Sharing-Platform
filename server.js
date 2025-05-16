@@ -2,21 +2,25 @@ const express = require('express');
 const app = express();
 const { Server } = require('socket.io');
 const { v4: uuidv4 } = require('uuid');
+const cors = require('cors');
 
-// Add CORS headers for all routes
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    next();
-});
+// Enable CORS
+app.use(cors({
+    origin: ['https://binimoyweb.vercel.app', 'http://localhost:3000'],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    credentials: true
+}));
 
 app.use(express.static('public'));
+
+// Debug endpoint to check server status
+app.get('/debug', (req, res) => {
+    res.json({
+        status: 'ok',
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
+    });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -27,23 +31,49 @@ const rooms = new Map();
 
 const server = require('http').createServer(app);
 
-// Configure Socket.IO
+// Configure Socket.IO with debug logging
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: ['https://binimoyweb.vercel.app', 'http://localhost:3000'],
         methods: ['GET', 'POST', 'OPTIONS'],
-        credentials: true,
-        allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept']
+        credentials: true
     },
-    allowEIO3: true,
     path: '/socket.io/',
-    transports: ['polling', 'websocket'],
+    transports: ['websocket', 'polling'],
+    allowEIO3: true,
     pingTimeout: 60000,
     pingInterval: 25000,
     upgradeTimeout: 30000,
     allowUpgrades: true,
     cookie: false,
     serveClient: false
+});
+
+// Add connection logging
+io.engine.on('connection_error', (err) => {
+    console.error('Connection error:', {
+        code: err.code,
+        message: err.message,
+        context: err.context,
+        req: err.req ? {
+            url: err.req.url,
+            headers: err.req.headers,
+            method: err.req.method
+        } : 'No request data'
+    });
+});
+
+// Add middleware to log connection attempts
+io.use((socket, next) => {
+    console.log('Connection attempt:', {
+        id: socket.id,
+        handshake: {
+            headers: socket.handshake.headers,
+            query: socket.handshake.query,
+            auth: socket.handshake.auth
+        }
+    });
+    next();
 });
 
 setupSocketIO(io);
