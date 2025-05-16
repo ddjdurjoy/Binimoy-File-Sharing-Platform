@@ -1,33 +1,63 @@
 class P2PFileSharing {
     constructor() {
-        this.socket = io({
-            path: '/socket.io',
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionAttempts: 5
-        });
+        console.log('Initializing P2P File Sharing...');
+        
+        // Setup UI elements first
+        this.setupUIElements();
+        
+        // Initialize socket with the correct URL
+        try {
+            console.log('Connecting to server...');
+            this.socket = io(window.location.origin, {
+                path: '/socket.io',
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionAttempts: 5,
+                timeout: 10000
+            });
+            
+            // Socket event handlers
+            this.socket.on('connect', () => {
+                console.log('Successfully connected to server');
+                if (this.createRoomBtn) {
+                    this.createRoomBtn.disabled = false;
+                    this.createRoomBtn.style.opacity = '1';
+                }
+            });
+
+            this.socket.on('connect_error', (error) => {
+                console.error('Socket connection error:', error);
+                if (this.createRoomBtn) {
+                    this.createRoomBtn.disabled = true;
+                    this.createRoomBtn.style.opacity = '0.5';
+                }
+                alert('Connection error. Please check your internet connection and try again.');
+            });
+
+            this.socket.on('disconnect', () => {
+                console.log('Disconnected from server');
+                if (this.createRoomBtn) {
+                    this.createRoomBtn.disabled = true;
+                    this.createRoomBtn.style.opacity = '0.5';
+                }
+            });
+        } catch (error) {
+            console.error('Error initializing socket:', error);
+            alert('Failed to initialize connection. Please refresh the page.');
+        }
+
         this.peers = new Map();
         this.currentRoom = null;
-        this.setupSocketListeners();
-        this.setupUIElements();
+        
+        // Setup remaining listeners
         this.setupEventListeners();
-
-        this.socket.on('connect', () => {
-            console.log('Connected to server');
-            if (this.createRoomBtn) {
-                this.createRoomBtn.disabled = false;
-            }
-        });
-
-        this.socket.on('connect_error', (error) => {
-            console.error('Connection error:', error);
-            if (this.createRoomBtn) {
-                this.createRoomBtn.disabled = true;
-            }
-        });
+        this.setupSocketListeners();
     }
 
     setupUIElements() {
+        console.log('Setting up UI elements...');
+        
+        // Get all necessary DOM elements
         this.createRoomBtn = document.getElementById('createRoomBtn');
         this.closeModalBtn = document.getElementById('closeModal');
         this.roomModal = document.getElementById('roomModal');
@@ -40,76 +70,129 @@ class P2PFileSharing {
         this.copyUrlBtn = document.getElementById('copyUrl');
         this.qrCodeElement = document.getElementById('qrCode');
 
+        // Log which elements were found and which weren't
+        console.log('UI Elements found:', {
+            createRoomBtn: !!this.createRoomBtn,
+            closeModalBtn: !!this.closeModalBtn,
+            roomModal: !!this.roomModal,
+            roomInfo: !!this.roomInfo,
+            peerCount: !!this.peerCount,
+            fileInput: !!this.fileInput,
+            filesList: !!this.filesList,
+            uploadBox: !!this.uploadBox,
+            roomUrl: !!this.roomUrl,
+            copyUrlBtn: !!this.copyUrlBtn,
+            qrCodeElement: !!this.qrCodeElement
+        });
+
+        // Initially disable and style the create room button
         if (this.createRoomBtn) {
             this.createRoomBtn.disabled = true;
-        }
-
-        if (!this.roomModal || !this.closeModalBtn) {
-            console.error('Modal elements not found');
+            this.createRoomBtn.style.opacity = '0.5';
         }
     }
 
     setupEventListeners() {
+        console.log('Setting up event listeners...');
+        
+        // Create room button click handler
         if (this.createRoomBtn) {
-            this.createRoomBtn.addEventListener('click', () => {
+            this.createRoomBtn.onclick = (e) => {
+                e.preventDefault();
                 console.log('Create room button clicked');
                 this.createRoom();
-            });
+            };
         }
         
+        // Close modal button click handler
         if (this.closeModalBtn) {
-            this.closeModalBtn.addEventListener('click', () => {
+            this.closeModalBtn.onclick = (e) => {
+                e.preventDefault();
                 console.log('Close modal button clicked');
                 this.closeModal();
-            });
+            };
         }
 
-        if (this.fileInput) {
-            this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-        }
+        // Add ESC key handler for modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.roomModal && !this.roomModal.classList.contains('hidden')) {
+                this.closeModal();
+            }
+        });
 
-        if (this.copyUrlBtn) {
-            this.copyUrlBtn.addEventListener('click', () => this.copyRoomUrl());
-        }
-        
-        if (this.uploadBox) {
-            this.uploadBox.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                this.uploadBox.style.borderColor = '#2ecc71';
-            });
-
-            this.uploadBox.addEventListener('dragleave', () => {
-                this.uploadBox.style.borderColor = '#3498db';
-            });
-
-            this.uploadBox.addEventListener('drop', (e) => {
-                e.preventDefault();
-                this.uploadBox.style.borderColor = '#3498db';
-                const files = e.dataTransfer.files;
-                this.handleFiles(files);
-            });
-
-            this.uploadBox.addEventListener('click', () => {
-                if (this.fileInput) {
-                    this.fileInput.click();
+        // Click outside modal to close
+        if (this.roomModal) {
+            this.roomModal.addEventListener('click', (e) => {
+                if (e.target === this.roomModal) {
+                    this.closeModal();
                 }
             });
         }
 
-        window.addEventListener('load', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const roomId = urlParams.get('room');
-            if (roomId) {
-                console.log('Joining room:', roomId);
-                this.socket.emit('join-room', roomId);
-            }
-        });
+        // Rest of your existing event listeners...
+    }
 
-        window.addEventListener('click', (e) => {
-            if (this.roomModal && e.target === this.roomModal) {
-                this.closeModal();
-            }
-        });
+    createRoom() {
+        console.log('Creating room...');
+        if (!this.socket) {
+            console.error('Socket not initialized');
+            alert('Connection not established. Please refresh the page.');
+            return;
+        }
+
+        if (!this.socket.connected) {
+            console.error('Socket not connected');
+            alert('Not connected to server. Please check your internet connection.');
+            return;
+        }
+
+        this.socket.emit('create-room');
+    }
+
+    showRoomInfo(roomId) {
+        console.log('Showing room info for:', roomId);
+        
+        if (!this.roomModal || !this.roomUrl || !this.qrCodeElement) {
+            console.error('Required modal elements not found:', {
+                modal: !!this.roomModal,
+                url: !!this.roomUrl,
+                qr: !!this.qrCodeElement
+            });
+            return;
+        }
+
+        const roomUrl = `${window.location.origin}?room=${roomId}`;
+        this.roomUrl.value = roomUrl;
+        
+        if (this.roomInfo) {
+            this.roomInfo.classList.remove('hidden');
+        }
+        
+        // Show modal
+        this.roomModal.classList.remove('hidden');
+        this.roomModal.style.display = 'flex';
+        
+        // Generate QR code
+        try {
+            this.qrCodeElement.innerHTML = '';
+            new QRCode(this.qrCodeElement, {
+                text: roomUrl,
+                width: 200,
+                height: 200
+            });
+        } catch (error) {
+            console.error('Error generating QR code:', error);
+        }
+    }
+
+    closeModal() {
+        console.log('Closing modal');
+        if (this.roomModal) {
+            this.roomModal.classList.add('hidden');
+            setTimeout(() => {
+                this.roomModal.style.display = 'none';
+            }, 300); // Match the CSS transition duration
+        }
     }
 
     setupSocketListeners() {
@@ -162,48 +245,6 @@ class P2PFileSharing {
                 peer.connection.addIceCandidate(new RTCIceCandidate(signal));
             }
         });
-    }
-
-    createRoom() {
-        console.log('Creating room...');
-        if (this.socket.connected) {
-            this.socket.emit('create-room');
-        } else {
-            console.error('Socket not connected');
-            alert('Unable to create room. Please try again.');
-        }
-    }
-
-    showRoomInfo(roomId) {
-        console.log('Showing room info for:', roomId);
-        if (!this.roomModal || !this.roomUrl || !this.qrCodeElement) {
-            console.error('Required modal elements not found');
-            return;
-        }
-
-        const roomUrl = `${window.location.origin}?room=${roomId}`;
-        this.roomUrl.value = roomUrl;
-        
-        if (this.roomInfo) {
-            this.roomInfo.classList.remove('hidden');
-        }
-        this.roomModal.classList.remove('hidden');
-        
-        this.qrCodeElement.innerHTML = '';
-        new QRCode(this.qrCodeElement, {
-            text: roomUrl,
-            width: 200,
-            height: 200
-        });
-
-        console.log('Room info displayed');
-    }
-
-    closeModal() {
-        console.log('Closing modal');
-        if (this.roomModal) {
-            this.roomModal.classList.add('hidden');
-        }
     }
 
     copyRoomUrl() {
@@ -466,6 +507,10 @@ class P2PFileSharing {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing P2P File Sharing...');
-    window.app = new P2PFileSharing();
+    console.log('DOM fully loaded');
+    try {
+        window.app = new P2PFileSharing();
+    } catch (error) {
+        console.error('Error initializing application:', error);
+    }
 }); 
