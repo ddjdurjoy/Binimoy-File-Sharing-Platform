@@ -12,37 +12,23 @@ app.get('/health', (req, res) => {
 
 const rooms = new Map();
 
-// Export the app for Vercel
-module.exports = app;
+const server = require('http').createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    },
+    path: '/socket.io'
+});
 
-// Only create server if we're not in Vercel's serverless environment
+setupSocketIO(io);
+
+// For local development
 if (process.env.NODE_ENV !== 'production') {
-    const http = require('http').createServer(app);
-    const io = new Server(http, {
-        cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
-        }
-    });
-
-    setupSocketIO(io);
-
     const PORT = process.env.PORT || 3000;
-    http.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
-} else {
-    // For Vercel serverless environment
-    const httpServer = require('http').createServer();
-    const io = new Server(httpServer, {
-        cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
-        },
-        path: '/socket.io'
-    });
-
-    setupSocketIO(io);
 }
 
 function setupSocketIO(io) {
@@ -88,4 +74,7 @@ function setupSocketIO(io) {
             console.log('A user disconnected');
         });
     });
-} 
+}
+
+// Export the server instance for Vercel
+module.exports = server; 
