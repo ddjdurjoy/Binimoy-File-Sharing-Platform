@@ -20,19 +20,24 @@ class P2PFileSharing {
                 path: '/socket.io/',
                 transports: ['polling'],
                 reconnection: true,
-                reconnectionAttempts: 10,
-                reconnectionDelay: 1000,
-                reconnectionDelayMax: 5000,
-                timeout: 20000,
-                autoConnect: false // Don't connect automatically
+                reconnectionAttempts: 5,
+                reconnectionDelay: 2000,
+                reconnectionDelayMax: 10000,
+                timeout: 30000,
+                autoConnect: false,
+                forceNew: true,
+                withCredentials: true,
+                extraHeaders: {
+                    'Access-Control-Allow-Credentials': 'true'
+                }
             });
 
             // Setup event listeners before connecting
             this.setupSocketListeners();
             this.setupFileHandlers();
 
-            // Now connect
-            this.socket.connect();
+            // Now connect with retry logic
+            this.connectWithRetry();
             
         } catch (error) {
             console.error('Error initializing socket:', error);
@@ -221,11 +226,19 @@ class P2PFileSharing {
         this.socket.on('connect', () => {
             console.log('Successfully connected to server', {
                 id: this.socket.id,
-                transport: this.socket.io?.engine?.transport?.name
+                transport: this.socket.io.engine.transport.name,
+                protocol: this.socket.io.engine.protocol
             });
+            
             if (this.createRoomBtn) {
                 this.createRoomBtn.disabled = false;
                 this.createRoomBtn.style.opacity = '1';
+            }
+            
+            // Clear any previous error messages
+            const errorElement = document.getElementById('connectionError');
+            if (errorElement) {
+                errorElement.remove();
             }
         });
 
@@ -233,28 +246,42 @@ class P2PFileSharing {
             console.error('Socket connection error:', {
                 message: error.message,
                 type: error.type,
-                description: error.description
+                description: error.description,
+                transport: this.socket.io?.engine?.transport?.name
             });
 
             if (this.createRoomBtn) {
                 this.createRoomBtn.disabled = true;
                 this.createRoomBtn.style.opacity = '0.5';
             }
+
+            // Show error message to user
+            this.showConnectionError('Connection error. Retrying...');
         });
 
         this.socket.on('error', (error) => {
             console.error('Socket error:', error);
+            this.showConnectionError('An error occurred. Please refresh the page.');
         });
 
         this.socket.on('disconnect', (reason) => {
             console.log('Disconnected from server:', {
                 reason,
-                wasConnected: this.socket.connected
+                wasConnected: this.socket.connected,
+                transport: this.socket.io?.engine?.transport?.name
             });
+            
             if (this.createRoomBtn) {
                 this.createRoomBtn.disabled = true;
                 this.createRoomBtn.style.opacity = '0.5';
             }
+
+            if (reason === 'io server disconnect') {
+                // Server initiated disconnect, attempt reconnection
+                this.socket.connect();
+            }
+
+            this.showConnectionError('Disconnected from server. Attempting to reconnect...');
         });
 
         // Room events
@@ -624,6 +651,61 @@ class P2PFileSharing {
                 fileInfo.textContent = status;
             }
         }
+    }
+
+    connectWithRetry() {
+        let retryCount = 0;
+        const maxRetries = 5;
+        
+        const tryConnect = () => {
+            console.log(`Attempting to connect (attempt ${retryCount + 1}/${maxRetries})...`);
+            
+            this.socket.connect();
+            
+            this.socket.once('connect_error', (error) => {
+                console.error('Connection error:', {
+                    message: error.message,
+                    type: error.type,
+                    description: error.description
+                });
+                
+                retryCount++;
+                if (retryCount < maxRetries) {
+                    console.log(`Retrying in ${2000 * retryCount}ms...`);
+                    setTimeout(tryConnect, 2000 * retryCount);
+                } else {
+                    console.error('Max retries reached. Please refresh the page.');
+                    alert('Failed to connect to server. Please check your internet connection and try refreshing the page.');
+                }
+            });
+        };
+        
+        tryConnect();
+    }
+
+    showConnectionError(message) {
+        let errorElement = document.getElementById('connectionError');
+        
+        if (!errorElement) {
+            errorElement = document.createElement('div');
+            errorElement.id = 'connectionError';
+            errorElement.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #ff4444;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                text-align: center;
+                font-size: 14px;
+            `;
+            document.body.appendChild(errorElement);
+        }
+        
+        errorElement.textContent = message;
     }
 }
 

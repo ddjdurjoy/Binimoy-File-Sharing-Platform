@@ -4,12 +4,27 @@ const { Server } = require('socket.io');
 const { v4: uuidv4 } = require('uuid');
 const cors = require('cors');
 
-// Enable CORS
+// Enable CORS with specific configuration
 app.use(cors({
-    origin: true, // Allow all origins
+    origin: '*',
     methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
+
+// Add specific CORS headers for Socket.IO
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
+});
 
 app.use(express.static('public'));
 
@@ -19,7 +34,16 @@ app.get('/debug', (req, res) => {
         status: 'ok',
         environment: process.env.NODE_ENV,
         timestamp: new Date().toISOString(),
-        socketIOPath: '/socket.io/'
+        socketIOPath: '/socket.io/',
+        cors: {
+            origin: '*',
+            methods: ['GET', 'POST', 'OPTIONS'],
+            credentials: true
+        },
+        vercel: {
+            region: process.env.VERCEL_REGION || 'unknown',
+            env: process.env.VERCEL_ENV || 'unknown'
+        }
     });
 });
 
@@ -35,32 +59,35 @@ const server = require('http').createServer(app);
 // Configure Socket.IO with debug logging
 const io = new Server(server, {
     cors: {
-        origin: true, // Allow all origins
+        origin: '*',
         methods: ['GET', 'POST', 'OPTIONS'],
-        credentials: true
+        credentials: true,
+        allowedHeaders: ['Content-Type', 'Authorization']
     },
-    path: '/socket.io/',
-    transports: ['polling', 'websocket'],
     allowEIO3: true,
-    pingTimeout: 60000,
-    pingInterval: 25000,
-    upgradeTimeout: 30000,
-    allowUpgrades: true,
+    transports: ['polling'],
+    pingTimeout: 30000,
+    pingInterval: 10000,
+    upgradeTimeout: 15000,
+    allowUpgrades: false,
     cookie: false,
-    serveClient: false
+    serveClient: false,
+    connectTimeout: 45000,
+    maxHttpBufferSize: 1e8 // 100 MB
 });
 
 // Add connection logging
 io.engine.on('connection_error', (err) => {
     console.error('Connection error:', {
-        code: err.code,
         message: err.message,
         context: err.context,
         req: err.req ? {
             url: err.req.url,
             headers: err.req.headers,
             method: err.req.method
-        } : 'No request data'
+        } : 'No request data',
+        code: err.code,
+        type: err.type
     });
 });
 
@@ -72,7 +99,8 @@ io.use((socket, next) => {
             headers: socket.handshake.headers,
             query: socket.handshake.query,
             auth: socket.handshake.auth
-        }
+        },
+        transport: socket.conn.transport.name
     });
     next();
 });
@@ -205,5 +233,5 @@ function setupSocketIO(io) {
     }, 60 * 60 * 1000); // Check every hour
 }
 
-// Export the server instance for Vercel
+// Export for Vercel serverless function
 module.exports = server; 
