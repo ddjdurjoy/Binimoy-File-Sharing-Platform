@@ -3,6 +3,21 @@ const app = express();
 const { Server } = require('socket.io');
 const { v4: uuidv4 } = require('uuid');
 
+// Add CORS headers for all routes
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin === 'https://binimoyweb.vercel.app' || origin === 'http://localhost:3000') {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type');
+        res.header('Access-Control-Allow-Credentials', 'true');
+    }
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
+
 app.use(express.static('public'));
 
 // Health check endpoint
@@ -16,11 +31,18 @@ const server = require('http').createServer(app);
 const io = new Server(server, {
     cors: {
         origin: ["https://binimoyweb.vercel.app", "http://localhost:3000"],
-        methods: ["GET", "POST"],
-        credentials: true
+        methods: ["GET", "POST", "OPTIONS"],
+        credentials: true,
+        allowedHeaders: ["content-type"]
     },
-    path: '/socket.io',
-    transports: ['websocket', 'polling']
+    path: '/socket.io/',
+    transports: ['polling', 'websocket'],
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    upgradeTimeout: 30000,
+    allowUpgrades: true,
+    cookie: false,
+    serveClient: false
 });
 
 setupSocketIO(io);
@@ -152,5 +174,4 @@ function setupSocketIO(io) {
 }
 
 // Export the server instance for Vercel
-module.exports = server; 
 module.exports = server; 

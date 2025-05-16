@@ -8,17 +8,32 @@ class P2PFileSharing {
         // Initialize socket with the correct URL
         try {
             console.log('Connecting to server...');
-            this.socket = io(window.location.origin, {
-                path: '/socket.io',
-                transports: ['websocket', 'polling'],
+            const isProduction = window.location.hostname !== 'localhost';
+            const socketURL = isProduction 
+                ? 'https://binimoyweb.vercel.app'
+                : 'http://localhost:3000';
+            
+            console.log('Socket URL:', socketURL);
+            
+            this.socket = io(socketURL, {
+                path: '/socket.io/',
+                transports: ['polling', 'websocket'], // Try polling first, then upgrade to websocket
                 reconnection: true,
                 reconnectionAttempts: 5,
-                timeout: 10000
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 20000,
+                autoConnect: true,
+                withCredentials: true,
+                forceNew: true
             });
             
             // Socket event handlers
             this.socket.on('connect', () => {
-                console.log('Successfully connected to server');
+                console.log('Successfully connected to server', {
+                    id: this.socket.id,
+                    transport: this.socket.io.engine.transport.name
+                });
                 if (this.createRoomBtn) {
                     this.createRoomBtn.disabled = false;
                     this.createRoomBtn.style.opacity = '1';
@@ -27,15 +42,25 @@ class P2PFileSharing {
 
             this.socket.on('connect_error', (error) => {
                 console.error('Socket connection error:', error);
+                console.error('Connection details:', {
+                    url: socketURL,
+                    readyState: this.socket.connected ? 'connected' : 'disconnected',
+                    transport: this.socket.io?.engine?.transport?.name || 'none',
+                    protocol: window.location.protocol,
+                    hostname: window.location.hostname
+                });
                 if (this.createRoomBtn) {
                     this.createRoomBtn.disabled = true;
                     this.createRoomBtn.style.opacity = '0.5';
                 }
-                alert('Connection error. Please check your internet connection and try again.');
             });
 
-            this.socket.on('disconnect', () => {
-                console.log('Disconnected from server');
+            this.socket.on('error', (error) => {
+                console.error('Socket error:', error);
+            });
+
+            this.socket.on('disconnect', (reason) => {
+                console.log('Disconnected from server. Reason:', reason);
                 if (this.createRoomBtn) {
                     this.createRoomBtn.disabled = true;
                     this.createRoomBtn.style.opacity = '0.5';
