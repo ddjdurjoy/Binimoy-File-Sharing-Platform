@@ -18,7 +18,7 @@ class P2PFileSharing {
             // Initialize Socket.IO with proper configuration
             this.socket = io(socketURL, {
                 path: '/socket.io/',
-                transports: ['websocket', 'polling'],
+                transports: ['polling', 'websocket'],
                 reconnection: true,
                 reconnectionAttempts: 10,
                 reconnectionDelay: 1000,
@@ -27,13 +27,10 @@ class P2PFileSharing {
                 autoConnect: false,
                 forceNew: true,
                 withCredentials: true,
-                auth: {
-                    token: 'client'
-                },
-                extraHeaders: {
-                    'Accept': 'application/json',
-                    'Access-Control-Allow-Credentials': 'true'
-                }
+                upgrade: true,
+                rememberUpgrade: true,
+                secure: true,
+                rejectUnauthorized: false
             });
 
             // Setup event listeners before connecting
@@ -253,8 +250,8 @@ class P2PFileSharing {
                 description: error.description,
                 transport: this.socket.io?.engine?.transport?.name,
                 protocol: this.socket.io?.engine?.protocol,
-                headers: this.socket.io?.engine?.transport?.ws?._headers,
-                readyState: this.socket.io?.engine?.transport?.ws?.readyState
+                readyState: this.socket.io?.engine?.transport?.ws?.readyState,
+                url: this.socket.io?.uri
             });
 
             if (this.createRoomBtn) {
@@ -321,6 +318,25 @@ class P2PFileSharing {
             }
             const peer = this.peers.get(userId);
             this.handleSignal(peer, signal);
+        });
+
+        // Add transport error logging
+        this.socket.io.engine.on('transport_error', (error) => {
+            console.error('Transport error:', {
+                type: error.type,
+                message: error.message,
+                description: error.description,
+                transport: this.socket.io.engine.transport.name
+            });
+        });
+
+        // Log successful transport changes
+        this.socket.io.engine.on('upgrade', (transport) => {
+            console.log('Transport upgraded:', transport.name);
+        });
+
+        this.socket.io.engine.on('downgrade', (transport) => {
+            console.log('Transport downgraded:', transport.name);
         });
     }
 

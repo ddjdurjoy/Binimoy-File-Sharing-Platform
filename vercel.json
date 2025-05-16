@@ -14,7 +14,7 @@
         {
             "src": "/socket.io/(.*)",
             "headers": {
-                "Access-Control-Allow-Origin": "https://binimoyweb.vercel.app",
+                "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
                 "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
                 "Access-Control-Allow-Credentials": "true",
@@ -24,27 +24,22 @@
         },
         {
             "src": "/socket.io/(.*)",
-            "dest": "/server.js"
-        },
-        {
-            "src": "/debug",
-            "dest": "/server.js"
-        },
-        {
-            "src": "/health",
-            "dest": "/server.js"
+            "dest": "server.js"
         },
         {
             "handle": "filesystem"
         },
         {
+            "src": "/debug",
+            "dest": "server.js"
+        },
+        {
+            "src": "/health",
+            "dest": "server.js"
+        },
+        {
             "src": "/(.*)",
-            "dest": "/public/$1",
-            "headers": {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-                "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-            }
+            "dest": "public/$1"
         }
     ],
     "env": {

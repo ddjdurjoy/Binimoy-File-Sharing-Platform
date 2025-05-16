@@ -6,7 +6,7 @@ const cors = require('cors');
 
 // Enable CORS with specific configuration
 app.use(cors({
-    origin: ['https://binimoyweb.vercel.app', 'https://binimoy-two.vercel.app', 'http://localhost:3000'],
+    origin: true,
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true
@@ -14,9 +14,8 @@ app.use(cors({
 
 // Add specific CORS headers for Socket.IO
 app.use((req, res, next) => {
-    const allowedOrigins = ['https://binimoyweb.vercel.app', 'https://binimoy-two.vercel.app', 'http://localhost:3000'];
     const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
+    if (origin) {
         res.header('Access-Control-Allow-Origin', origin);
     }
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -63,7 +62,7 @@ const server = require('http').createServer(app);
 // Configure Socket.IO with debug logging
 const io = new Server(server, {
     cors: {
-        origin: ['https://binimoyweb.vercel.app', 'https://binimoy-two.vercel.app', 'http://localhost:3000'],
+        origin: true,
         methods: ['GET', 'POST', 'OPTIONS'],
         credentials: true,
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
@@ -74,14 +73,8 @@ const io = new Server(server, {
     pingInterval: 25000,
     upgradeTimeout: 30000,
     allowUpgrades: true,
-    cookie: {
-        name: 'io',
-        path: '/',
-        httpOnly: true,
-        sameSite: 'none',
-        secure: true
-    },
-    serveClient: false,
+    cookie: false,
+    serveClient: true,
     connectTimeout: 60000,
     maxHttpBufferSize: 1e8 // 100 MB
 });
@@ -108,7 +101,8 @@ io.use((socket, next) => {
         handshake: {
             headers: socket.handshake.headers,
             query: socket.handshake.query,
-            auth: socket.handshake.auth
+            auth: socket.handshake.auth,
+            url: socket.handshake.url
         },
         transport: socket.conn.transport.name
     });
