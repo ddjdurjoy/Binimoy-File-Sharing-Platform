@@ -1,0 +1,26 @@
+{
+  "index": {
+    "seo": {
+      "title": "Binimoy Web",
+      "description": "আপনার ব্রাউজার এবং অন্যান্য ডিভাইসের মধ্যে ফাইল শেয়ার করুন।"
+    },
+    "connecting": "সংযোগ করছি...",
+    "webCryptoNotSupported": "আপনার ব্রাউজার Binimoy সমর্থন করে না: Web Crypto API প্রয়োজন।",
+    "empty": {
+      "title": "অন্য একটি ডিভাইসে Binimoy খুলুন।",
+      "deviceHint": "অন্য একটি ব্রাউজার বা নেটিভ সংস্করণে এই সাইটটি খুলুন।",
+      "lanHint": "শুধুমাত্র একই নেটওয়ার্কে থাকা ডিভাইসগুলি দেখানো হয়।"
+    },
+    "you": "আপনি হলেন:",
+    "pin": {
+      "label": "PIN: ",
+      "none": "কোনো না"
+    },
+    "enterAlias": "নাম লিখুন",
+    "enterPin": "PIN লিখুন",
+    "progress": {
+      "titleSending": "ফাইল পাঠাচ্ছি...",
+      "titleReceiving": "ফাইল গ্রহণ করছি..."
+    }
+  }
+}

@@ -24,17 +24,23 @@ export default defineNuxtConfig({
     defaultLocale: "en",
     locales: [
       {
-        code: "de",
-        language: "de-DE",
-        file: "de.json",
-        name: "Deutsch",
-      },
-      {
         code: "en",
         language: "en-US",
         file: "en.json",
         name: "English",
         isCatchallLocale: true,
+      },
+      {
+        code: "bn",
+        language: "bn-BD",
+        file: "bn.json",
+        name: "বাংলা",
+      },
+      {
+        code: "de",
+        language: "de-DE",
+        file: "de.json",
+        name: "Deutsch",
       },
       {
         code: "km",
