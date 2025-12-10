@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Binimoy - P2P File Sharing Web Application
 
 Binimoy is a peer-to-peer file sharing web application that allows users to share files directly between browsers using WebRTC technology. The application provides a simple and intuitive interface for creating rooms, sharing files, and managing transfers.
@@ -154,3 +155,51 @@ If you encounter any issues or have questions:
 1. Check the [Issues](https://github.com/ddjdurjoy/Binimoy-File-Sharing-Platform/issues) section
 2. Create a new issue with detailed information
 3. Include browser console logs for technical problems 
+=======
+# LocalSend Web App
+
+A web app integrating WebRTC and WebSockets to share files with other LocalSend peers (browsers, or native versions).
+
+Live: https://web.localsend.org
+
+## Setup
+
+Make sure to install [pnpm](https://pnpm.io).
+
+```bash
+npm install -g pnpm
+```
+
+Get dependencies
+
+```bash
+pnpm install
+```
+
+Start the development server
+
+```bash
+pnpm run dev
+```
+
+## Deployment
+
+Generates the static website in the `dist` directory.
+
+```bash
+pnpm run generate
+```
+
+### Self-hosting
+
+1. Clone this repo
+2. Build: `docker build --tag localsend-web --file Containerfile`
+3. Run: `docker run --rm --publish 8080:443 --volume caddy-data:/data localsend-web`
+
+## Contributing
+
+### Adding a new language
+
+1. Add new JSON file in `i18n/locales/` directory.
+2. Add the new language in `nuxt.config.ts`.
+>>>>>>> 24c69991613fb0210156398f434675629999e73a
