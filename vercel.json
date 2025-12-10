@@ -1,29 +1,5 @@
 {
     "version": 2,
-    "builds": [
-        {
-            "src": "server.js",
-            "use": "@vercel/node"
-        },
-        {
-            "src": "public/**",
-            "use": "@vercel/static"
-        }
-    ],
-    "routes": [
-        {
-            "src": "/socket.io/(.*)",
-            "dest": "server.js"
-        },
-        {
-            "handle": "filesystem"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "public/$1"
-        }
-    ],
-    "env": {
-        "NODE_ENV": "production"
-    }
+    "buildCommand": "pnpm run generate",
+    "outputDirectory": ".output/public"
 } 

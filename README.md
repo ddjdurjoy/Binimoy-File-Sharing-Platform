@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Binimoy - P2P File Sharing Web Application
 
 Binimoy is a peer-to-peer file sharing web application that allows users to share files directly between browsers using WebRTC technology. The application provides a simple and intuitive interface for creating rooms, sharing files, and managing transfers.
@@ -31,8 +30,8 @@ Binimoy is a peer-to-peer file sharing web application that allows users to shar
 
 ## Prerequisites
 
-- Node.js (v16.0.0 or higher)
-- npm (v7.0.0 or higher)
+- Node.js (v16.0.0 or higher) or pnpm
+- pnpm (recommended) or npm
 
 ## Local Development
 
@@ -44,12 +43,12 @@ Binimoy is a peer-to-peer file sharing web application that allows users to shar
 
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. Start the development server:
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
 4. Open your browser and visit:
@@ -59,59 +58,59 @@ Binimoy is a peer-to-peer file sharing web application that allows users to shar
 
 ## Deployment
 
-The application is deployed on Vercel. To deploy your own instance:
+The application is deployed on Vercel as a static site. To deploy your own instance:
 
 1. Fork the repository
 2. Create a new project on [Vercel](https://vercel.com)
 3. Connect your GitHub repository
-4. Configure the following settings:
-   - Build Command: `npm run vercel-build`
-   - Output Directory: `public`
-   - Install Command: `npm install`
+4. Vercel will automatically detect Nuxt and configure the build settings
+5. The site will be built and deployed automatically
+
+### Self-hosting with Docker
+
+1. Clone this repo
+2. Build: `docker build --tag binimoy-web --file Containerfile`
+3. Run: `docker run --rm --publish 8080:443 --volume caddy-data:/data binimoy-web`
 
 ## Usage
 
 1. **Creating a Room**
    - Visit the application URL
-   - Click the plus (+) icon in the top-right corner
-   - Share the generated QR code or URL with others
+   - Your unique identifier (alias) is displayed at the top
+   - Share the URL or QR code with others to connect
 
 2. **Joining a Room**
-   - Scan the QR code or visit the shared URL
+   - Visit the shared URL
    - Wait for the connection to establish
-   - You'll see the number of connected peers update
+   - You'll see connected peers displayed
 
 3. **Sharing Files**
-   - Drag and drop files into the upload area
-   - Or click the upload area to select files
+   - Click on a peer to select them
+   - Select files from your device
    - Monitor transfer progress in real-time
-   - Download received files by clicking the download button
+   - Files are received directly in your browser
 
 ## Technical Stack
 
 - **Frontend**:
-  - HTML5, CSS3, JavaScript (ES6+)
-  - Socket.IO Client
+  - Vue 3 with TypeScript
+  - Nuxt 3 Framework
+  - Tailwind CSS for styling
   - WebRTC for P2P connections
-  - QR Code generation using qrcode.js
-
-- **Backend**:
-  - Node.js with Express
-  - Socket.IO for signaling
-  - UUID for room management
-  - CORS for cross-origin support
+  - WebSocket for signaling
+  - pako for compression
 
 - **Deployment**:
-  - Vercel for hosting
-  - Vercel Serverless Functions
-  - Vercel Edge Network
+  - Vercel for static hosting
+  - Vercel Edge Network for CDN
+  - Docker support for self-hosting
 
 ## Troubleshooting
 
 If you encounter connection issues:
 
 1. **Browser Support**
-   - Ensure you're using a modern browser (Chrome, Firefox, Edge)
+   - Ensure you're using a modern browser (Chrome, Firefox, Edge, Safari)
    - Enable WebRTC in your browser settings
    - Allow necessary permissions when prompted
 
@@ -119,21 +118,21 @@ If you encounter connection issues:
    - Check your internet connection
    - Try refreshing the page
    - Clear browser cache if needed
-   - Ensure no firewall is blocking WebSocket connections
+   - Ensure no firewall is blocking WebRTC connections
 
 3. **File Transfer Problems**
-   - Maximum file size is 100MB
    - Keep the browser tab active during transfer
    - Both peers must remain connected until transfer completes
+   - Check browser console for error messages
 
 ## Security Features
 
 - All file transfers are peer-to-peer (P2P)
 - No files are stored on the server
-- Room IDs are randomly generated UUIDs
-- Rooms expire after 24 hours
-- STUN/TURN servers for NAT traversal
-- Secure WebSocket connections
+- Cryptographic signing for peer authentication
+- PIN protection for enhanced security
+- Direct encryption of file transfers
+- STUN servers for NAT traversal
 
 ## Contributing
 
@@ -147,59 +146,11 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## License
 
-MIT License - feel free to use this project for personal or commercial purposes.
+Apache License 2.0 - See LICENSE file for details.
 
 ## Support
 
 If you encounter any issues or have questions:
 1. Check the [Issues](https://github.com/ddjdurjoy/Binimoy-File-Sharing-Platform/issues) section
 2. Create a new issue with detailed information
-3. Include browser console logs for technical problems 
-=======
-# LocalSend Web App
-
-A web app integrating WebRTC and WebSockets to share files with other LocalSend peers (browsers, or native versions).
-
-Live: https://web.localsend.org
-
-## Setup
-
-Make sure to install [pnpm](https://pnpm.io).
-
-```bash
-npm install -g pnpm
-```
-
-Get dependencies
-
-```bash
-pnpm install
-```
-
-Start the development server
-
-```bash
-pnpm run dev
-```
-
-## Deployment
-
-Generates the static website in the `dist` directory.
-
-```bash
-pnpm run generate
-```
-
-### Self-hosting
-
-1. Clone this repo
-2. Build: `docker build --tag localsend-web --file Containerfile`
-3. Run: `docker run --rm --publish 8080:443 --volume caddy-data:/data localsend-web`
-
-## Contributing
-
-### Adding a new language
-
-1. Add new JSON file in `i18n/locales/` directory.
-2. Add the new language in `nuxt.config.ts`.
->>>>>>> 24c69991613fb0210156398f434675629999e73a
+3. Include browser console logs for technical problems

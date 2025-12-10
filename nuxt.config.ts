@@ -19,7 +19,7 @@ export default defineNuxtConfig({
     },
   },
   i18n: {
-    baseUrl: "https://web.localsend.org",
+    baseUrl: "https://binimoyweb.vercel.app",
     strategy: "prefix_except_default",
     defaultLocale: "en",
     locales: [
