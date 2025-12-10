@@ -1,12 +1,12 @@
 {
   "index": {
     "seo": {
-      "title": "Binimoy Web",
-      "description": "Tarayıcınız ve Binimoy çalıştıran diğer cihazlar arasında dosya paylaşın."
+      "title": "LocalSend Web",
+      "description": "Tarayıcınız ve LocalSend çalıştıran diğer cihazlar arasında dosya paylaşın."
     },
     "connecting": "Bağlanıyor...",
     "empty": {
-      "title": "Binimoy'i başka bir cihazda açın.",
+      "title": "LocalSend'i başka bir cihazda açın.",
       "deviceHint": "Bu siteyi başka bir tarayıcıda veya yerel sürümde (v1.18.0 veya daha yeni) açın.",
       "lanHint": "Sadece aynı ağda bulunan cihazlar gösterilir."
     },

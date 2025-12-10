@@ -8,7 +8,8 @@
         style="animation: spin 10s linear infinite"
       />
       <div class="flex flex-col justify-center ml-2">
-        <h1 class="text-xl font-bold">Binimoy Web</h1>
+        <h1 class="text-xl font-bold">LocalSend</h1>
+        <h2 class="leading-none mt-0.5">Web</h2>
       </div>
     </div>
 

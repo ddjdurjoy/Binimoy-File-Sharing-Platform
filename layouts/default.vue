@@ -7,7 +7,7 @@ const localeHead = useLocaleHead({
   addSeoAttributes: true,
 });
 const title = computed(() =>
-  route.meta.title ? t(route.meta.title) : "Binimoy Web",
+  route.meta.title ? t(route.meta.title) : "LocalSend",
 );
 const description = computed(() =>
   route.meta.description ? t(route.meta.description) : null,
