@@ -1,0 +1,2 @@
+# PNPM-specific config removed to support npm
+# original entries removed: public-hoist-pattern for parcel/watcher and esbuild
