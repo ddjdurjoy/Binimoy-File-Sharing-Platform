@@ -1,12 +1,11 @@
 <template>
-  <transition name="dialog">
+  <transition name="fade">
     <div
       v-if="props.visible"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      @click.self="$emit('close')"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
     >
       <div
-        class="bg-white dark:bg-slate-800 w-full max-w-2xl mx-4 rounded-2xl shadow-2xl text-gray-900 dark:text-white overflow-hidden border border-gray-100 dark:border-slate-700 transform transition-all"
+        class="bg-white w-full max-w-lg mx-4 rounded shadow-md text-black"
         role="dialog"
         aria-modal="true"
       >
@@ -20,25 +19,15 @@
 const props = defineProps<{
   visible: boolean;
 }>();
-
-defineEmits<{
-  close: [];
-}>();
 </script>
 
 <style scoped>
-.dialog-enter-active,
-.dialog-leave-active {
-  transition: all 0.2s ease-in-out;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease-in-out;
 }
-
-.dialog-enter-from,
-.dialog-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
-}
-
-.dialog-enter-from > div,
-.dialog-leave-to > div {
-  transform: scale(0.95) translateY(-10px);
 }
 </style>
