@@ -1,42 +1,21 @@
 <template>
   <div class="dark:text-white flex flex-col min-h-screen">
-    <div class="flex items-center gap-3 px-4 pt-4 pb-2 sticky top-0 bg-white/80 dark:bg-gray-950/70 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
+    <ToastHost />
+    <div class="flex items-center gap-3 px-4 pt-4 pb-2 sticky top-0 bg-[#0A0E1A]/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-b border-white/5">
       <Logo />
       <div class="flex flex-col justify-center">
         <h1 class="text-2xl md:text-3xl font-semibold tracking-tight">Binimoy Web</h1>
-        <h2 class="leading-none mt-0.5 text-sm md:text-base text-gray-600 dark:text-gray-300">Peer-to-Peer File Sharing</h2>
+        <h2 class="leading-none mt-0.5 text-sm md:text-base text-gray-300">Peer-to-Peer File Sharing</h2>
       </div>
     </div>
 
+    <HeroSection />
+
     <div v-if="store.client" class="px-4 mt-4">
       <div class="max-w-6xl mx-auto">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="rounded-2xl border border-black/5 dark:border-white/10 bg-white dark:bg-gray-900 p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t("index.you") }}</p>
-                <button class="mt-1 inline-flex items-center gap-2 text-base font-semibold hover:underline"
-                        @click="updateAlias">
-                  <Icon name="mdi:account" />
-                  {{ store.client.alias }}
-                </button>
-              </div>
-              <Icon name="mdi:pencil" class="opacity-60" />
-            </div>
-          </div>
-          <div class="rounded-2xl border border-black/5 dark:border-white/10 bg-white dark:bg-gray-900 p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t("index.pin.label") }}</p>
-                <button class="mt-1 inline-flex items-center gap-2 text-base font-semibold hover:underline"
-                        @click="updatePIN">
-                  <Icon name="mdi:key-variant" />
-                  {{ store.pin ?? t("index.pin.none") }}
-                </button>
-              </div>
-              <Icon name="mdi:pencil" class="opacity-60" />
-            </div>
-          </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <IdentityCard :alias="store.client.alias" @edit="updateAlias" />
+          <PinCard :pin="store.pin" @edit="updatePIN" />
         </div>
       </div>
     </div>
@@ -54,18 +33,23 @@
       </h3>
     </div>
 
-    <div
-      v-else-if="store.peers.length === 0"
-      class="flex-1 flex flex-col items-center justify-center text-center px-6"
-    >
-      <Icon name="mdi:lan-connect" class="text-[56px] opacity-70" />
-      <h3 class="text-2xl font-semibold mt-2">{{ t("index.empty.title") }}</h3>
-      <p class="mt-2 text-gray-600 dark:text-gray-300 max-w-xl">{{ t("index.empty.deviceHint") }}</p>
-      <p class="text-gray-600 dark:text-gray-300">{{ t("index.empty.lanHint") }}</p>
+    <div v-else-if="store.peers.length === 0" class="flex-1 px-4">
+      <DeviceGrid :peers="[]">
+        <template #skeleton>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+            <SkeletonBlock v-for="n in 6" :key="n" block-class="h-24 bg-white/5 border border-white/10" />
+          </div>
+        </template>
+      </DeviceGrid>
     </div>
 
-    <div v-else class="flex justify-center px-3 sm:px-4 pb-10">
-      <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div v-else class="flex justify-center px-3 sm:px-4 pb-10" id="devices">
+      <div class="w-full max-w-6xl">
+        <DeviceGrid :peers="store.peers" @select="selectPeer">
+          <template #skeleton />
+        </DeviceGrid>
+      </div>
+      <div class="w-full max-w-6xl"><DeviceGrid :peers="store.peers" @select="selectPeer" /></div>
         <PeerCard
           v-for="peer in store.peers"
           :key="peer.id"
@@ -82,8 +66,16 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import ToastHost from "~/components/ui/ToastHost.vue";
+import HeroSection from "~/components/sections/HeroSection.vue";
+import IdentityCard from "~/components/sections/IdentityCard.vue";
+import PinCard from "~/components/sections/PinCard.vue";
+import DeviceGrid from "~/components/sections/DeviceGrid.vue";
+import UploadZone from "~/components/sections/UploadZone.vue";
+import FeaturesShowcase from "~/components/sections/FeaturesShowcase.vue";
 import Logo from "~/components/Logo.vue";
 import { PeerDeviceType } from "@/services/signaling";
+import SkeletonBlock from "~/components/ui/SkeletonBlock.vue";
 import {
   setupConnection,
   startSendSession,
@@ -161,6 +153,7 @@ const updateAlias = async () => {
   updateAliasState(alias);
 };
 
+const onFilesPicked = (picked: FileList) => { filesToSend.value = picked; };
 const updatePIN = async () => {
   const pin = prompt(t("index.enterPin"));
   if (typeof pin === "string") {
