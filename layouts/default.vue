@@ -36,10 +36,8 @@ const description = computed(() =>
           />
         </template>
       </Head>
-      <Body class="min-h-screen">
-        <div class="min-h-screen bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-black">
-          <slot />
-        </div>
+      <Body class="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+        <slot />
       </Body>
     </Html>
   </div>

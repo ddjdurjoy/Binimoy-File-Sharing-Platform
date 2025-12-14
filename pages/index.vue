@@ -1,10 +1,10 @@
 <template>
   <div class="dark:text-white flex flex-col min-h-screen">
-    <div class="flex items-center gap-3 px-4 pt-4 pb-2 sticky top-0 bg-transparent backdrop-blur-[2px]">
+    <div class="flex items-center gap-3 px-4 pt-4 pb-2 sticky top-0 bg-white/80 dark:bg-gray-950/70 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
       <Logo />
       <div class="flex flex-col justify-center">
-        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Binimoy Web</h1>
-        <h2 class="leading-none mt-0.5 text-sm md:text-base opacity-80">Peer-to-Peer File Sharing</h2>
+        <h1 class="text-2xl md:text-3xl font-semibold tracking-tight">Binimoy Web</h1>
+        <h2 class="leading-none mt-0.5 text-sm md:text-base text-gray-600 dark:text-gray-300">Peer-to-Peer File Sharing</h2>
       </div>
     </div>
 
@@ -199,6 +199,7 @@ onMounted(async () => {
 </script>
 
 <style>
+/* moved global variables to app.vue */
 :root {
   /* Primary palette tuned to match Binimoy brand */
   --primary-50: #ecfeff;
