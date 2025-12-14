@@ -49,16 +49,10 @@
           <template #skeleton />
         </DeviceGrid>
       </div>
-      <div class="w-full max-w-6xl"><DeviceGrid :peers="store.peers" @select="selectPeer" /></div>
-        <PeerCard
-          v-for="peer in store.peers"
-          :key="peer.id"
-          :peer="peer"
-          class="mb-0"
-          @click="selectPeer(peer.id)"
-        />
-      </div>
     </div>
+
+    <UploadZone @files="onFilesPicked" />
+    <FeaturesShowcase />
 
     <SessionDialog />
   </div>
