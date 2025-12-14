@@ -51,10 +51,16 @@
       </div>
     </div>
 
-    <UploadZone @files="onFilesPicked" />
+    <UploadZone @files="onFilesPicked" @readyToSend="onUploadReady" />
     <FeaturesShowcase />
 
-    <SessionDialog />
+   <HistorySection :sent="sentHistory" :received="receivedHistory" @clear="clearHistory" @download="downloadReceived" />
+
+   <SettingsDialog v-model="showSettings" />
+   <TutorialDialog v-model="showTutorial" />
+   <QRPairModal v-model="showQR" :url="pairUrl" />
+
+   <SessionDialog />
   </div>
 </template>
 
@@ -67,6 +73,11 @@ import PinCard from "~/components/sections/PinCard.vue";
 import DeviceGrid from "~/components/sections/DeviceGrid.vue";
 import UploadZone from "~/components/sections/UploadZone.vue";
 import FeaturesShowcase from "~/components/sections/FeaturesShowcase.vue";
+import HistorySection from "~/components/sections/HistorySection.vue";
+import SettingsDialog from "~/components/sections/SettingsDialog.vue";
+import TutorialDialog from "~/components/sections/TutorialDialog.vue";
+import QRPairModal from "~/components/sections/QRPairModal.vue";
+import { toastBus } from "~/utils/toastBus";
 import Logo from "~/components/Logo.vue";
 import { PeerDeviceType } from "@/services/signaling";
 import SkeletonBlock from "~/components/ui/SkeletonBlock.vue";
@@ -97,20 +108,16 @@ definePageMeta({
 const { t } = useI18n();
 
 const { open: openFileDialog, onChange } = useFileDialog();
+const filesToSend = ref<FileList|null>(null);
 
 onChange(async (files) => {
   if (!files) return;
-
   if (files.length === 0) return;
-
-  if (!store.signaling) return;
-
+  if (!store.signaling || !targetId.value) return;
   await startSendSession({
     files,
     targetId: targetId.value,
-    onPin: async () => {
-      return prompt(t("index.enterPin"));
-    },
+    onPin: async () => prompt(t("index.enterPin")),
   });
 });
 
@@ -119,9 +126,19 @@ const webCryptoSupported = ref(true);
 
 const targetId = ref("");
 
-const selectPeer = (id: string) => {
+const selectPeer = async (id: string) => {
   targetId.value = id;
-  openFileDialog();
+  if (filesToSend.value && filesToSend.value.length > 0) {
+    if (!store.signaling) return;
+    await startSendSession({
+      files: filesToSend.value,
+      targetId: targetId.value,
+      onPin: async () => prompt(t("index.enterPin")),
+    });
+    filesToSend.value = null;
+  } else {
+    openFileDialog();
+  }
 };
 
 const updateAlias = async () => {
@@ -148,6 +165,23 @@ const updateAlias = async () => {
 };
 
 const onFilesPicked = (picked: FileList) => { filesToSend.value = picked; };
+const onUploadReady = () => {
+  // hint user to select a device
+  if (!targetId.value) toastBus.show({ title: 'Select a device', message: 'Choose a device from the grid to send files.', icon: 'mdi:lan-connect' });
+};
+
+const showSettings = ref(false);
+const showTutorial = ref(false);
+const showQR = ref(false);
+const pairUrl = computed(() => {
+  if (process.client) return location.origin;
+  try { return useRequestURL().origin; } catch { return ''; }
+});
+const sentHistory = ref<{name:string,size:string,time:string,bps?:number}[]>([]);
+const receivedHistory = ref<{name:string,size:string,time:string,url?:string}[]>([]);
+function clearHistory(){ sentHistory.value = []; receivedHistory.value = []; }
+function downloadReceived(item: {url?:string,name:string}){ if(item.url) window.open(item.url, '_blank'); }
+
 const updatePIN = async () => {
   const pin = prompt(t("index.enterPin"));
   if (typeof pin === "string") {

@@ -28,7 +28,7 @@
 import { Icon } from '@iconify/vue';
 import ProgressBar from '~/components/ProgressBar.vue';
 
-const emit = defineEmits<{ (e:'files', files: FileList): void }>();
+const emit = defineEmits<{ (e:'files', files: FileList): void; (e:'readyToSend'): void }>();
 const input = ref<HTMLInputElement|null>(null);
 const drop = ref<HTMLElement|null>(null);
 const dragOver = ref(false);
@@ -37,7 +37,7 @@ let id = 0;
 function pick(){ input.value?.click(); }
 function onPick(e: Event){ const target = e.target as HTMLInputElement; if(target.files) { emit('files', target.files); addFiles(target.files); target.value = ''; } }
 function remove(fid:number){ files.value = files.value.filter(x=>x.id!==fid); }
-function addFiles(list: FileList){ for(const f of Array.from(list)){ files.value.push({ id: ++id, file: f, progress: 0 }); } }
+function addFiles(list: FileList){ for(const f of Array.from(list)){ files.value.push({ id: ++id, file: f, progress: 0 }); } emit('readyToSend'); }
 
 onMounted(() => {
   if(!drop.value) return;

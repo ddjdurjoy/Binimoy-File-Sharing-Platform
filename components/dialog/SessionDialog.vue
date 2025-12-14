@@ -9,9 +9,10 @@
         }}
       </h1>
 
-      <div class="flex">
+      <div class="flex items-center gap-2">
         <span class="flex-1 font-bold">Total:</span>
         <span>{{ totalCurr }} / {{ totalTotal }}</span>
+        <span class="text-sm opacity-80"> • Speed: {{ speedHuman }}/s</span>
       </div>
       <ProgressBar :progress="store.session.curr / store.session.total" />
 
@@ -37,7 +38,12 @@ const totalCurr = computed(() => {
   return formatBytes(store.session.curr);
 });
 
-const totalTotal = computed(() => {
-  return formatBytes(store.session.total);
+const totalTotal = computed(() => formatBytes(store.session.total));
+const speedHuman = computed(() => {
+  const b = store.session.speedBps || 0;
+  if (b > 1e9) return (b/1e9).toFixed(2) + ' GB';
+  if (b > 1e6) return (b/1e6).toFixed(2) + ' MB';
+  if (b > 1e3) return (b/1e3).toFixed(1) + ' KB';
+  return b.toFixed(0) + ' B';
 });
 </script>

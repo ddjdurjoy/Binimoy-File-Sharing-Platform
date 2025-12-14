@@ -59,6 +59,9 @@ export const store = reactive({
     curr: 0,
     total: 1, // Avoid division by zero
     fileState: {} as Record<string, FileState>,
+    lastBytesTs: 0,
+    lastBytes: 0,
+    speedBps: 0,
   },
 });
 
@@ -255,10 +258,21 @@ export async function acceptOffer({
 
 function onFileProgress(progress: FileProgress) {
   store.session.fileState[progress.id].curr = progress.curr;
-  store.session.curr = Object.values(store.session.fileState).reduce(
-    (acc, file) => acc + file.curr,
-    0,
-  );
+  const now = Date.now();
+  const totalCurr = Object.values(store.session.fileState).reduce((acc, f) => acc + f.curr, 0);
+  if (store.session.lastBytesTs === 0) {
+    store.session.lastBytesTs = now;
+    store.session.lastBytes = totalCurr;
+  } else {
+    const dt = (now - store.session.lastBytesTs) / 1000;
+    if (dt > 0) {
+      const db = totalCurr - store.session.lastBytes;
+      store.session.speedBps = db / dt;
+      store.session.lastBytesTs = now;
+      store.session.lastBytes = totalCurr;
+    }
+  }
+  store.session.curr = totalCurr;
   if (progress.success) {
     store.session.fileState[progress.id].state = "finished";
   } else if (progress.error) {
