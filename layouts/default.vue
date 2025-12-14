@@ -7,7 +7,7 @@ const localeHead = useLocaleHead({
   addSeoAttributes: true,
 });
 const title = computed(() =>
-  route.meta.title ? t(route.meta.title) : "LocalSend",
+  route.meta.title ? t(route.meta.title) : "Binimoy Web - File Sharing App",
 );
 const description = computed(() =>
   route.meta.description ? t(route.meta.description) : null,
@@ -36,8 +36,10 @@ const description = computed(() =>
           />
         </template>
       </Head>
-      <Body class="dark:bg-gray-900 bg-gray-200">
-        <slot />
+      <Body class="min-h-screen">
+        <div class="min-h-screen bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-black">
+          <slot />
+        </div>
       </Body>
     </Html>
   </div>

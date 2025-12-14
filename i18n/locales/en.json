@@ -1,14 +1,14 @@
 {
   "index": {
     "seo": {
-      "title": "LocalSend Web",
-      "description": "Share files between your browser and other devices running LocalSend."
+      "title": "Binimoy Web - File Sharing App",
+      "description": "Share files easily between your browser and other devices using Binimoy Web.",
     },
     "connecting": "Connecting...",
-    "webCryptoNotSupported": "Your browser does not support LocalSend: Web Crypto API is required.",
+    "webCryptoNotSupported": "Your browser does not support Binimoy Web: Web Crypto API is required.",
     "empty": {
-      "title": "Open LocalSend on another device.",
-      "deviceHint": "Open this site in another browser or native version (v1.18.0 or newer).",
+      "title": "Open Binimoy on another device.",
+      "deviceHint": "Open this site in another browser or the Binimoy app (v1.18.0 or newer).",
       "lanHint": "Only devices in the same network are shown."
     },
     "you": "You are:",

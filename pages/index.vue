@@ -1,15 +1,10 @@
 <template>
   <div class="dark:text-white flex flex-col h-screen">
-    <div class="flex mt-2">
-      <img
-        src="/apple-touch-icon.png"
-        alt="Logo"
-        class="h-16 ml-2"
-        style="animation: spin 10s linear infinite"
-      />
-      <div class="flex flex-col justify-center ml-2">
-        <h1 class="text-xl font-bold">LocalSend</h1>
-        <h2 class="leading-none mt-0.5">Web</h2>
+    <div class="flex items-center gap-3 px-4 pt-4">
+      <Logo />
+      <div class="flex flex-col justify-center">
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Binimoy Web</h1>
+        <h2 class="leading-none mt-0.5 text-sm md:text-base opacity-80">Peer-to-Peer File Sharing</h2>
       </div>
     </div>
 
@@ -60,13 +55,13 @@
       <h3>{{ t("index.empty.lanHint") }}</h3>
     </div>
 
-    <div v-else class="flex justify-center px-4">
-      <div class="w-96">
+    <div v-else class="flex justify-center px-4 pb-16">
+      <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <PeerCard
           v-for="peer in store.peers"
           :key="peer.id"
           :peer="peer"
-          class="mb-4"
+          class="mb-0"
           @click="selectPeer(peer.id)"
         />
       </div>
@@ -77,6 +72,7 @@
 </template>
 
 <script setup lang="ts">
+import Logo from "~/components/Logo.vue";
 import { PeerDeviceType } from "@/services/signaling";
 import {
   setupConnection,
@@ -203,12 +199,29 @@ onMounted(async () => {
 </script>
 
 <style>
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+:root {
+  /* Primary palette tuned to match Binimoy brand */
+  --primary-50: #ecfeff;
+  --primary-100: #cffafe;
+  --primary-200: #a5f3fc;
+  --primary-300: #67e8f9;
+  --primary-400: #22d3ee;
+  --primary-500: #06b6d4; /* base */
+  --primary-600: #0891b2;
+  --primary-700: #0e7490;
+  --primary-800: #155e75;
+  --primary-900: #164e63;
+}
+.dark:root, .dark {
+  --primary-50: #0b1f24;
+  --primary-100: #0e2b33;
+  --primary-200: #114050;
+  --primary-300: #155e75;
+  --primary-400: #0ea5b1;
+  --primary-500: #06b6d4;
+  --primary-600: #22d3ee;
+  --primary-700: #67e8f9;
+  --primary-800: #a5f3fc;
+  --primary-900: #cffafe;
 }
 </style>

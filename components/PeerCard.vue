@@ -1,6 +1,12 @@
 <template>
   <div
-    class="flex py-2 text-white drop-shadow-lg rounded-lg bg-teal-700 hover:bg-teal-600 cursor-pointer"
+    class="flex py-2 text-white drop-shadow-lg rounded-lg"
+    :style="{
+      background: 'var(--primary-700)',
+    }"
+    @mouseover="hover = true"
+    @mouseleave="hover = false"
+    :class="hover ? 'ring-2 ring-[color:var(--primary-400)]' : ''"
   >
     <div class="flex items-center justify-center px-2">
       <Icon :name="iconName" class="size-10" />
@@ -8,10 +14,10 @@
     <div class="flex-1">
       <p class="text-xl">{{ props.peer.alias }}</p>
       <p class="text-xs mt-1 mb-1">
-        <span class="bg-teal-900 px-1 py-0.5 rounded">{{
+        <span class="px-1 py-0.5 rounded" :style="{ background: 'var(--primary-800)' }">{{
           props.peer.deviceModel ?? "Unknown"
         }}</span>
-        <span class="ml-2 bg-teal-900 px-1 py-0.5 rounded">WebRTC</span>
+        <span class="ml-2 px-1 py-0.5 rounded" :style="{ background: 'var(--primary-800)' }">WebRTC</span>
       </p>
     </div>
   </div>
@@ -19,6 +25,7 @@
 
 <script setup lang="ts">
 import { type ClientInfo } from "@/services/signaling";
+const hover = ref(false);
 
 const props = defineProps<{
   peer: ClientInfo;

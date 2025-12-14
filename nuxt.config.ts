@@ -5,10 +5,15 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     head: {
+      meta: [
+        { name: 'theme-color', content: '#06b6d4' },
+        { name: 'theme-color', content: '#0b1f24', media: '(prefers-color-scheme: dark)' }
+      ],
       link: [
         {
           rel: "icon",
-          href: "/favicon.ico",
+          type: "image/png",
+          href: "/Binimoy Fav Icon.png",
         },
         {
           rel: "apple-touch-icon",
