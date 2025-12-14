@@ -1,6 +1,6 @@
 <template>
-  <div class="dark:text-white flex flex-col h-screen">
-    <div class="flex items-center gap-3 px-4 pt-4">
+  <div class="dark:text-white flex flex-col min-h-screen">
+    <div class="flex items-center gap-3 px-4 pt-4 pb-2 sticky top-0 bg-transparent backdrop-blur-[2px]">
       <Logo />
       <div class="flex flex-col justify-center">
         <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Binimoy Web</h1>
@@ -55,8 +55,8 @@
       <h3>{{ t("index.empty.lanHint") }}</h3>
     </div>
 
-    <div v-else class="flex justify-center px-4 pb-16">
-      <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div v-else class="flex justify-center px-3 sm:px-4 pb-6">
+      <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <PeerCard
           v-for="peer in store.peers"
           :key="peer.id"

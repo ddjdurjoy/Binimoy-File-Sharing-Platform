@@ -1,5 +1,6 @@
 <template>
   <div v-if="i18nEnabled" class="flex items-center">
+    <!-- limit to English and Bengali only -->
     <Icon name="material-symbols:translate" class="me-1 dark:text-white" />
     <select
       v-bind:value="localeIdentity"
@@ -8,7 +9,7 @@
       @change="changeLocale"
     >
       <option
-        v-for="(locale, index) in locales"
+        v-for="(locale, index) in filteredLocales"
         :key="index"
         :value="locale.code"
       >
@@ -27,6 +28,9 @@
 
 <script setup lang="ts">
 const { locale, locales } = useI18n();
+// Filter to only en and bn just in case
+const filteredLocales = computed(() => locales.value.filter(l => ['en', 'bn'].includes(l.code)));
+
 const switchLocalePath = useSwitchLocalePath();
 
 const localeIdentity = ref("");
@@ -46,7 +50,7 @@ const changeLocale = (e: Event) => {
 };
 
 const currLocaleName = computed(() => {
-  return locales.value.find((l) => l.code === locale.value)?.name;
+  return filteredLocales.value.find((l) => l.code === locale.value)?.name;
 });
 
 const i18nEnabled = computed(() => {

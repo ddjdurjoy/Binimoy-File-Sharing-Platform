@@ -41,30 +41,6 @@ export default defineNuxtConfig({
         file: "bn.json",
         name: "বাংলা",
       },
-      {
-        code: "de",
-        language: "de-DE",
-        file: "de.json",
-        name: "Deutsch",
-      },
-      {
-        code: "km",
-        language: "km-KH",
-        file: "km.json",
-        name: "ភាសាខ្មែរ",
-      },
-      {
-        code: "ko",
-        language: "ko-KR",
-        file: "ko.json",
-        name: "한국어",
-      },
-      {
-        code: "tr",
-        language: "tr-TR",
-        file: "tr.json",
-        name: "Türkçe",
-      },
     ],
   },
   nitro: {
