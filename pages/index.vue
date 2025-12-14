@@ -8,27 +8,35 @@
       </div>
     </div>
 
-    <div v-if="store.client" class="flex justify-center items-center mt-8 pb-8">
-      <div class="flex">
-        <div>
-          {{ t("index.you") }}<br />
-          <span class="font-bold cursor-pointer" @click="updateAlias">{{
-            store.client.alias
-          }}</span>
-        </div>
-
-        <div
-          class="inline-block h-12 w-[2px] bg-gray-300 dark:bg-gray-700 mx-4"
-        ></div>
-
-        <div class="pr-2">
-          <span>
-            {{ t("index.pin.label") }}
-          </span>
-          <br />
-          <span class="font-bold cursor-pointer" @click="updatePIN">
-            {{ store.pin ?? t("index.pin.none") }}
-          </span>
+    <div v-if="store.client" class="px-4 mt-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="rounded-2xl border border-black/5 dark:border-white/10 bg-white dark:bg-gray-900 p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t("index.you") }}</p>
+                <button class="mt-1 inline-flex items-center gap-2 text-base font-semibold hover:underline"
+                        @click="updateAlias">
+                  <Icon name="mdi:account" />
+                  {{ store.client.alias }}
+                </button>
+              </div>
+              <Icon name="mdi:pencil" class="opacity-60" />
+            </div>
+          </div>
+          <div class="rounded-2xl border border-black/5 dark:border-white/10 bg-white dark:bg-gray-900 p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t("index.pin.label") }}</p>
+                <button class="mt-1 inline-flex items-center gap-2 text-base font-semibold hover:underline"
+                        @click="updatePIN">
+                  <Icon name="mdi:key-variant" />
+                  {{ store.pin ?? t("index.pin.none") }}
+                </button>
+              </div>
+              <Icon name="mdi:pencil" class="opacity-60" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -48,15 +56,16 @@
 
     <div
       v-else-if="store.peers.length === 0"
-      class="flex-1 flex flex-col items-center justify-center text-center px-2"
+      class="flex-1 flex flex-col items-center justify-center text-center px-6"
     >
-      <h3 class="text-3xl">{{ t("index.empty.title") }}</h3>
-      <h3 class="mt-2">{{ t("index.empty.deviceHint") }}</h3>
-      <h3>{{ t("index.empty.lanHint") }}</h3>
+      <Icon name="mdi:lan-connect" class="text-[56px] opacity-70" />
+      <h3 class="text-2xl font-semibold mt-2">{{ t("index.empty.title") }}</h3>
+      <p class="mt-2 text-gray-600 dark:text-gray-300 max-w-xl">{{ t("index.empty.deviceHint") }}</p>
+      <p class="text-gray-600 dark:text-gray-300">{{ t("index.empty.lanHint") }}</p>
     </div>
 
-    <div v-else class="flex justify-center px-3 sm:px-4 pb-6">
-      <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+    <div v-else class="flex justify-center px-3 sm:px-4 pb-10">
+      <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <PeerCard
           v-for="peer in store.peers"
           :key="peer.id"
@@ -72,6 +81,7 @@
 </template>
 
 <script setup lang="ts">
+import { Icon } from "@iconify/vue";
 import Logo from "~/components/Logo.vue";
 import { PeerDeviceType } from "@/services/signaling";
 import {

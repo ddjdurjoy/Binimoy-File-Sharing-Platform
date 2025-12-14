@@ -36,7 +36,7 @@ const description = computed(() =>
           />
         </template>
       </Head>
-      <Body class="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <Body class="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans antialiased">
         <slot />
       </Body>
     </Html>

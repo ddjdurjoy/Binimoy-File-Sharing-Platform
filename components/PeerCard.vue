@@ -14,15 +14,13 @@
     @mouseleave="hover = false"
   >
     <div class="flex items-center justify-center px-2">
-      <Icon :name="iconName" class="size-12" />
+      <Icon :name="iconName" class="size-12 opacity-95" />
     </div>
     <div class="flex-1 min-w-0">
       <p class="text-[1.15rem] font-semibold leading-tight">{{ props.peer.alias }}</p>
-      <p class="text-xs mt-1 mb-1">
-        <span class="px-1 py-0.5 rounded" :style="{ background: 'var(--primary-800)' }">{{
-          props.peer.deviceModel ?? "Unknown"
-        }}</span>
-        <span class="ml-2 px-1 py-0.5 rounded" :style="{ background: 'var(--primary-800)' }">WebRTC</span>
+      <p class="text-xs mt-1 mb-1 flex flex-wrap gap-2">
+        <span class="px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10">{{ props.peer.deviceModel ?? "Unknown" }}</span>
+        <span class="px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10">WebRTC</span>
       </p>
     </div>
   </div>
